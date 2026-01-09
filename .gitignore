@@ -1,0 +1,17 @@
+.DS_Store
+.env
+
+#python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+#node/react
+node_modules/
+dist/
+.vite/
+
+.vscode/
+.idea/
