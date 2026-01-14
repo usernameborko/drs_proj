@@ -1,0 +1,3 @@
+class Config:
+    SECRET_KEY = "secretkey"
+    JWT_SECRET_KEY = "jwtsecretkey"
