@@ -1,5 +1,5 @@
 from flask_jwt_extended import create_access_token
-from Domain.models.User import User
+from app.Domain.models.User import User
 from datetime import datetime, timedelta
 
 class AuthResult:

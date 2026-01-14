@@ -1,14 +1,14 @@
-from Domain.enums.Role import Role
+from app.Domain.enums.Role import Role
 from datetime import datetime
-from Extensions.bcrypt import bcrypt
+from app.Extensions.bcrypt import bcrypt
 
 class User:
     def __init__(self, id: int,
                        email: str,
                        password_hash: str,
                        role: Role,
-                       failed_attempts: int,
-                       blocked_until: datetime):
+                       failed_attempts: int = 0,
+                       blocked_until: datetime | None = None):
         self.id = id
         self.email = email
         self.password_hash = password_hash
