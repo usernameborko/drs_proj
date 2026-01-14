@@ -1,0 +1,6 @@
+from enum import Enum
+
+class LoginDTO:
+    def __init__(self, email: str, password: str):
+        self.email = email
+        self.password = password
