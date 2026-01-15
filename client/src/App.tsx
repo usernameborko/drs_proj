@@ -1,8 +1,8 @@
+import AppRoutes from './routes';
+import './index.css';
 
 function App() {
-  return (
-    <h1>quiz platform</h1>
-  )
+  return <AppRoutes />;
 }
 
-export default App
+export default App;
