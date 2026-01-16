@@ -15,7 +15,7 @@ testUser = User(
     id = 1,
     email = "test@gmail.com",
     password_hash = hashed_password,
-    role = Role.PLAYER
+    role = Role.ADMIN
 )
 
 @auth_bp.route("/login", methods = ["POST"])

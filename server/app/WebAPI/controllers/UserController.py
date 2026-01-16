@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, request
 from dataclasses import asdict
-from app.Services.UserService import UserService
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
+from app.Services.UserService import UserService
 from app.Domain.enums.role import Role
+from app.Middleware.role_required import role_required
 
 user_bp = Blueprint("users", __name__)
 user_service = UserService()
@@ -20,6 +22,8 @@ def create_user():
 
 # DELETE
 @user_bp.route("/delete/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+@role_required(Role.ADMIN)
 def delete_user(user_id):
     dto, status = user_service.delete_user(user_id)
 
@@ -30,7 +34,14 @@ def delete_user(user_id):
 
 # UPDATE
 @user_bp.route("/update_profile/<int:user_id>", methods=["PUT"])
+@jwt_required()
+@role_required(Role.PLAYER, Role.MODERATOR)
 def update_user_profile(user_id):
+    current_user_id = int(get_jwt_identity())
+
+    if current_user_id != user_id:
+        return jsonify({"error": "You can only update your own profile"}), 403
+
     data = request.get_json()
     dto, status = user_service.update_user_profile(user_id, data)
 
@@ -41,6 +52,8 @@ def update_user_profile(user_id):
 
 # CHANGE ROLE
 @user_bp.route("/change_role/<int:user_id>", methods=["PUT"])
+@jwt_required()
+@role_required(Role.ADMIN)
 def change_user_role(user_id):
     data = request.get_json()
     new_role_str = data.get("role")
@@ -73,10 +86,12 @@ def get_user_by_id(user_id):
 
 # GET ALL USERS
 @user_bp.route("/all", methods=["GET"])
+@jwt_required()
+@role_required(Role.ADMIN)
 def get_all_users():
     dto, status = user_service.get_all_users()
     return jsonify(asdict(dto)), status
 
 # /api/users/me -> mozda
 
-# /api/users/<id>/profile-image -> kad se doda baza i front odradi
+# /api/users//profile-image/<id> -> kad se doda baza i front odradi

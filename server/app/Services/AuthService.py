@@ -31,9 +31,12 @@ class AuthService:
         user.failed_attemtps = 0
         user.blocked_until = None
 
+        print(">>> user.id =", user.id, type(user.id))
+        print(">>> user.role =", user.role)
+
         token = create_access_token(
-            identity = user.id,
-            additional_claims = {"role": user.role}
+            identity=str(user.id),
+            additional_claims={"role": user.role.value}
         )
 
         return AuthResult.SUCCESS, token
