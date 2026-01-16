@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from app.Services.AuthService import AuthService, AuthResult
 
 from app.Domain.models.User import User
-from app.Domain.enums.Role import Role
+from app.Domain.enums.role import Role
 from app.Extensions.bcrypt import bcrypt
 
 auth_bp = Blueprint("auth", __name__)

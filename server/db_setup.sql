@@ -1,0 +1,7 @@
+CREATE DATABASE IF NOT EXISTS drs_db;
+
+CREATE USER IF NOT EXISTS 'drs_user'@'localhost'
+  IDENTIFIED BY 'DrsPass123!';
+
+GRANT ALL PRIVILEGES ON drs_db.* TO 'drs_user'@'localhost';
+FLUSH PRIVILEGES;
