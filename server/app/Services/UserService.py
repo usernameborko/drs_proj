@@ -1,5 +1,5 @@
 from app.Domain.models.User import User
-from app.Domain.enums.Role import Role
+from app.Domain.enums.role import Role
 from app.Extensions.bcrypt import bcrypt
 
 class UserService:
