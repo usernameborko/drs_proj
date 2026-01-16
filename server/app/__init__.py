@@ -5,6 +5,7 @@ from flask_cors import CORS
 from app.Extensions.bcrypt import bcrypt
 from app.config import Config
 from app.WebAPI.controllers.AuthController import auth_bp
+from app.WebAPI.controllers.UserController import user_bp
 from app.WebAPI.controllers.DbTestController import db_test_bp
 
 jwt = JWTManager()
@@ -25,6 +26,7 @@ def create_app():
         db.create_all()
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(user_bp, url_prefix="/api/users")
     app.register_blueprint(db_test_bp, url_prefix="/api/db")
 
     @app.get("/")
