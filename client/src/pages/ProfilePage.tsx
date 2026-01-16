@@ -1,5 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { getUserProfile, updateUserProfile, type UserProfile } from "../services/userService";
+import React, { useState, useEffect, type ChangeEvent } from 'react';
+import { 
+  getUserProfile, 
+  updateUserProfile, 
+  updateProfileImage, 
+  type UserProfile 
+} from "../services/userService";
 
 // Tip za formu
 interface UserFormData {
@@ -14,7 +19,6 @@ interface UserFormData {
   number: string;
 }
 
-// Payload koji se šalje serveru, dozvoljava dodatno polje password
 type UpdateUserPayload = Partial<UserProfile> & { password?: string };
 
 const ProfilePage: React.FC = () => {
@@ -30,6 +34,8 @@ const ProfilePage: React.FC = () => {
     number: ''
   });
 
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [currentProfileImage, setCurrentProfileImage] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -49,6 +55,8 @@ const ProfilePage: React.FC = () => {
           street: data.street || '',
           number: data.number || ''
         });
+
+        if (data.profileImage) setCurrentProfileImage(data.profileImage);
       } catch (err) {
         setError('Ne mogu da učitam podatke profila.');
       }
@@ -57,8 +65,14 @@ const ProfilePage: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setProfileImage(e.target.files[0]);
+    }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -67,6 +81,7 @@ const ProfilePage: React.FC = () => {
     setError('');
 
     try {
+      // 1. Update osnovnih podataka
       const payload: UpdateUserPayload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -82,9 +97,20 @@ const ProfilePage: React.FC = () => {
 
       const res = await updateUserProfile(payload);
 
+      // 2. Update profilne slike, ako je izabrana
+      if (profileImage) {
+        const imageRes = await updateProfileImage(profileImage);
+        if (!imageRes.success) throw new Error(imageRes.message || 'Upload slike nije uspeo');
+
+        // Prikaz nove slike odmah
+        const newImageUrl = URL.createObjectURL(profileImage);
+        setCurrentProfileImage(newImageUrl);
+        setProfileImage(null);
+      }
+
       setMessage(res?.message || 'Profil uspešno ažuriran.');
     } catch (err) {
-      setError('Greška pri ažuriranju profila.');
+      setError((err as Error).message || 'Greška pri ažuriranju profila.');
     }
   };
 
@@ -103,6 +129,21 @@ const ProfilePage: React.FC = () => {
       {message && <p style={{ color: 'green', marginBottom: '1rem' }}>{message}</p>}
 
       <form onSubmit={handleUpdate}>
+        {/* Prikaz trenutne profilne slike */}
+        {currentProfileImage && (
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <img src={currentProfileImage} alt="Profilna" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }} />
+          </div>
+        )}
+
+        {/* Preview nove slike */}
+        {profileImage && (
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+            <p>Preview nove slike:</p>
+            <img src={URL.createObjectURL(profileImage)} alt="Preview" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }} />
+          </div>
+        )}
+
         {Object.keys(formData).map((key) => {
           const field = key as keyof UserFormData;
           const labelMap: Record<keyof UserFormData, string> = {
@@ -148,6 +189,12 @@ const ProfilePage: React.FC = () => {
             </div>
           );
         })}
+
+        {/* Upload profilne slike */}
+        <div style={{ marginBottom: '1rem' }}>
+          <label>Profilna slika:</label><br />
+          <input type="file" accept="image/*" onChange={handleImageChange} />
+        </div>
 
         <button type="submit" style={{
           width: '100%',

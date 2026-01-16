@@ -5,12 +5,18 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import UserListPage from './pages/UserListPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
 
 const AppRoutes: React.FC = () => (
+  
   <Router>
+    {/* Navbar će biti prikazan na svim stranicama */}
+    <Navbar />
+    
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      
       <Route
         path="/profile"
         element={
@@ -19,6 +25,7 @@ const AppRoutes: React.FC = () => (
           </ProtectedRoute>
         }
       />
+      
       <Route
         path="/users"
         element={
@@ -27,6 +34,8 @@ const AppRoutes: React.FC = () => (
           </ProtectedRoute>
         }
       />
+      
+      {/* Možeš dodati fallback ili 404 stranicu */}
     </Routes>
   </Router>
 );
