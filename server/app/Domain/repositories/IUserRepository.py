@@ -36,5 +36,5 @@ class IUserRepository(ABC):
     
     @abstractmethod
     def save(self) -> None:
-        """Cuva promene (za mock - nista, za pravu bazu - commit)"""
+        """Cuva promene u bazi"""
         pass
