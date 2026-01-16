@@ -1,3 +1,6 @@
+import os
+from werkzeug.utils import secure_filename
+from flask import current_app
 from datetime import datetime
 from app.Database.UserRepository import UserRepository
 from app.Domain.enums.role import Role
@@ -95,3 +98,25 @@ class UserService:
         user_summaries = [UserSummaryDTO.from_model(u) for u in users]
         dto = UserListDTO(count=len(user_summaries), users=user_summaries)
         return dto, 200
+        
+    def upload_profile_image(self, user_id: int, file):
+        user = self.repo.get_by_id(user_id)
+        if not user:
+            return {"error": f"User {user_id} not found"}, 404
+
+        ext = file.filename.rsplit(".", 1)[-1].lower()
+        if ext not in current_app.config["ALLOWED_IMAGE_EXTENSIONS"]:
+            return {"error": "Invalid file extension"}, 400
+
+        filename = secure_filename(f"user_{user_id}.{ext}")
+        folder = current_app.config["UPLOAD_FOLDER"]
+        os.makedirs(folder, exist_ok=True)
+        filepath = os.path.join(folder, filename)
+
+        # Lokalno za sad, pa cemo posle da kacimo na cloud storage
+        file.save(filepath)
+
+        user.profile_image = filepath
+        self.repo.update(user)
+
+        return {"message": "Profile image uploaded", "image_path": filepath}, 200
