@@ -1,25 +1,32 @@
 from datetime import datetime
-from app.Domain.models.User import User
-from app.Domain.enums.role import Role
-from app.Extensions.bcrypt import bcrypt
 from app.Database.UserRepository import UserRepository
+from app.Domain.enums.role import Role
+from app.Domain.models.User import User
+from app.Extensions.bcrypt import bcrypt
+from app.Domain.DTOs.UserDTO import UserDTO
+from app.Domain.DTOs.UserSummaryDTO import UserSummaryDTO
+from app.Domain.DTOs.UserListDTO import UserListDTO
+from app.Domain.DTOs.UserCreatedDTO import UserCreatedDTO
 
 class UserService:
     def __init__(self):
             self.repo = UserRepository()
 
     def create_user(self, data):
-
         email = data.get("email")
         password = data.get("password")
-        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+
+        if not email or not password:
+            return None, 400
 
         if self.repo.get_by_email(email):
-            return {"message": "User already exists"}, 409
+            return None, 409
+
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
         user = User(
             email=email,
-            password_hash=bcrypt.generate_password_hash(password).decode("utf-8"),
+            password_hash=hashed_password,
             first_name=data.get("first_name"),
             last_name=data.get("last_name"),
             date_of_birth=data.get("date_of_birth"),
@@ -32,82 +39,59 @@ class UserService:
         )
 
         self.repo.create(user)
-        return {"message": f"User {email} created successfully"}, 201
+        return UserCreatedDTO.from_model(user), 201
 
     def delete_user(self, user_id: int):
-        existing_user = self.repo.get_by_id(user_id)
+        user = self.repo.get_by_id(user_id)
 
-        if not existing_user:
-            return {"message": f"User with id {user_id} not found"}
+        if not user:
+            return None, 404
+
+        deleted_dto = UserCreatedDTO.from_model(user)
 
         self.repo.delete(user_id)
-        return {"message": f"User with id {user_id} deleted successfully"}
+        return deleted_dto, 200
 
-    def update_user_profile(self, user_id, data):
+    def update_user_profile(self, user_id: int, data):
         user = self.repo.get_by_id(user_id)
 
         if not user:
-            return {"message": f"User with id {user_id} not found"}
+            return None, 404
 
-        user.first_name = data.get("first_name", user.first_name)
-        user.last_name = data.get("last_name", user.last_name)
-        user.email = data.get("email", user.email)
-        user.date_of_birth = data.get("date_of_birth", user.date_of_birth)
-        user.gender = data.get("gender", user.gender)
-        user.country = data.get("country", user.country)
-        user.street = data.get("street", user.street)
-        user.street_number = data.get("street_number", user.street_number)
+        fields = ["first_name", "last_name", "email", "gender", "country", "street", "street_number", "profile_image"]
+        for f in fields:
+            if f in data and data[f]:
+                setattr(user, f, data[f])
 
         if "password" in data and data["password"]:
-            new_hashed = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
-            user.password_hash = new_hashed
+            user.password_hash = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
 
         self.repo.update(user)
-        return {"message": f"User {user.email} profile updated successfully"}
+        return UserDTO.from_model(user), 200
 
-    def change_user_role(self, user_id, new_role):
+    def change_user_role(self, user_id: int, new_role: Role):
         user = self.repo.get_by_id(user_id)
 
         if not user:
-            return {"message": f"User with id {user_id} not found"}
+            return None, 404
 
         user.role = new_role
         self.repo.update(user)
 
-        return {"message": f"Role of user {user.email} changed to {new_role.value}"}
+        return UserDTO.from_model(user), 200
 
     def get_user_by_id(self, user_id: int):
         user = self.repo.get_by_id(user_id)
 
         if not user:
-            return {"message": f"User with id {user_id} not found"}
+            return None, 404
 
-        return {
-            "id": user.id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-            "role": user.role.value,
-            "country": user.country,
-            "created_at": user.created_at.strftime("%Y-%m-%d %H:%M:%S")
-        }
+        return UserDTO.from_model(user), 200
 
     def get_all_users(self):
         users = self.repo.get_all()
 
-        users_data = []
-        for user in users:
-            users_data.append({
-                "id": user.id,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "role": user.role.value,
-                "country": user.country,
-                "created_at": user.created_at.strftime("%Y-%m-%d %H:%M:%S")
-            })
-
-        return {
-            "count": len(users_data),
-            "users": users_data
-        }
+        users = self.repo.get_all()
+        user_summaries = [UserSummaryDTO.from_model(u) for u in users]
+        dto = UserListDTO(count=len(user_summaries), users=user_summaries)
+        return dto, 200
