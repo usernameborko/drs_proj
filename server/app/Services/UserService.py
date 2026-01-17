@@ -3,7 +3,6 @@ from werkzeug.utils import secure_filename
 from flask import current_app
 from datetime import datetime
 from app.Database.UserRepository import UserRepository
-from app.Extensions.email_sender import EmailSender
 from app.Domain.enums.role import Role
 from app.Domain.models.User import User
 from app.Extensions.bcrypt import bcrypt
@@ -37,7 +36,7 @@ class UserService:
             gender=data.get("gender"),
             country=data.get("country"),
             street=data.get("street"),
-            street_number=data.get("street_number"),
+            street_number=data.get("number"),
             role=Role.PLAYER,
             created_at=datetime.utcnow()
         )
@@ -79,20 +78,8 @@ class UserService:
         if not user:
             return None, 404
 
-        old_role = user.role
         user.role = new_role
         self.repo.update(user)
-
-        try:
-            email_sender = EmailSender()
-            email_sender.send_role_change_email(
-                to_email=user.email,
-                new_role=new_role.value,
-                full_name=user.get_full_name()
-            )
-            print(f"[EMAIL] Poslat mejl korisniku {user.email} o promjeni role {old_role.value}->{new_role.value}")
-        except Exception as e:
-            print(f"[EMAIL ERROR] Neuspjelo slanje mejla korisniku {user.email}: {e}")
 
         return UserDTO.from_model(user), 200
 

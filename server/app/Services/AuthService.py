@@ -1,6 +1,7 @@
 from flask_jwt_extended import create_access_token
 from app.Domain.models.User import User
 from datetime import datetime, timedelta
+from app.Database.db import db
 
 class AuthResult:
     SUCCESS = "SUCCESS"
@@ -30,6 +31,7 @@ class AuthService:
         
         user.failed_attemtps = 0
         user.blocked_until = None
+        db.session.commit()
 
         print(">>> user.id =", user.id, type(user.id))
         print(">>> user.role =", user.role)

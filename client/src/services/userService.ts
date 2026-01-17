@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = "http://localhost:5000";
 
 /* ======================================================
    SHARED HELPERS
@@ -61,8 +61,11 @@ export interface UpdateUserProfileDTO {
    AUTHENTICATION
 ====================================================== */
 
-export const login = async (email: string, password: string): Promise<AuthResponse> => {
-  const res = await fetch(`${API_URL}/auth/login`, {
+export const login = async (
+  email: string,
+  password: string,
+): Promise<AuthResponse> => {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -76,7 +79,7 @@ export const login = async (email: string, password: string): Promise<AuthRespon
 };
 
 export const register = async (
-  data: Omit<UpdateUserProfileDTO, "password"> & { password: string }
+  data: Omit<UpdateUserProfileDTO, "password"> & { password: string },
 ): Promise<ApiResponse> => {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
@@ -97,7 +100,7 @@ export const logout = (): void => {
 ====================================================== */
 
 export const getUserProfile = async (): Promise<UserProfile> => {
-  const res = await fetch(`${API_URL}/user/profile`, {
+  const res = await fetch(`${API_URL}/api/user/profile`, {
     method: "GET",
     headers: authHeaders(),
   });
@@ -106,8 +109,10 @@ export const getUserProfile = async (): Promise<UserProfile> => {
   return res.json();
 };
 
-export const updateUserProfile = async (data: UpdateUserProfileDTO): Promise<ApiResponse> => {
-  const res = await fetch(`${API_URL}/user/profile`, {
+export const updateUserProfile = async (
+  data: UpdateUserProfileDTO,
+): Promise<ApiResponse> => {
+  const res = await fetch(`${API_URL}/api/user/profile`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -123,7 +128,7 @@ export const updateProfileImage = async (file: File): Promise<ApiResponse> => {
   const formData = new FormData();
   formData.append("profileImage", file);
 
-  const res = await fetch(`${API_URL}/user/profile/image`, {
+  const res = await fetch(`${API_URL}/api/user/profile/image`, {
     method: "POST",
     headers: {
       Authorization: token ? `Bearer ${token}` : "",
@@ -140,7 +145,7 @@ export const updateProfileImage = async (file: File): Promise<ApiResponse> => {
 ====================================================== */
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
-  const res = await fetch(`${API_URL}/users`, {
+  const res = await fetch(`${API_URL}/api/users`, {
     method: "GET",
     headers: authHeaders(),
   });
@@ -150,7 +155,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 };
 
 export const deleteUser = async (userId: number): Promise<ApiResponse> => {
-  const res = await fetch(`${API_URL}/users/${userId}`, {
+  const res = await fetch(`${API_URL}/api/users/${userId}`, {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -159,8 +164,11 @@ export const deleteUser = async (userId: number): Promise<ApiResponse> => {
   return res.json();
 };
 
-export const changeUserRole = async (userId: number, role: UserRole): Promise<ApiResponse> => {
-  const res = await fetch(`${API_URL}/users/${userId}/role`, {
+export const changeUserRole = async (
+  userId: number,
+  role: UserRole,
+): Promise<ApiResponse> => {
+  const res = await fetch(`${API_URL}/api/users/${userId}/role`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify({ role }),

@@ -39,11 +39,23 @@ const RegistrationPage: React.FC = () => {
     setError("");
     setSuccess("");
 
+    const payload = {
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      date_of_birth: formData.dateOfBirth,
+      gender: formData.gender,
+      country: formData.country,
+      street: formData.street,
+      number: formData.number,
+    };
+
     try {
-      const response = await fetch("http://127.0.0.1:5000/register", {
+      const response = await fetch("http://127.0.0.1:5000/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {

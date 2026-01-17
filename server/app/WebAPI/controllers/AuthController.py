@@ -8,28 +8,21 @@ from app.Extensions.bcrypt import bcrypt
 auth_bp = Blueprint("auth", __name__)
 authService = AuthService()
 
-#test user
-hashed_password = bcrypt.generate_password_hash("123").decode("utf-8")
-
-testUser = User(
-    id = 1,
-    email = "test@gmail.com",
-    password_hash = hashed_password,
-    role = Role.ADMIN
-)
 
 @auth_bp.route("/login", methods = ["POST"])
 
 def login():
     data = request.get_json()
 
+    print("LOGIN DATA:", data)
+
     email = data.get("email")
     password = data.get("password")
 
-    if email == testUser.email:
-        user = testUser
-    else:
-        user = None
+    if not email or not password:
+        return jsonify({"message": "Email or password are required"}), 400
+    
+    user = User.query.filter_by(email=email).first()
     
     result, token = authService.login(user, password)
 
@@ -40,4 +33,3 @@ def login():
         return jsonify({"message": "Invalid credentials"}), 401
     
     return jsonify(access_token = token), 200
-

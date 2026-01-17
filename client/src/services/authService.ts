@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = "http://localhost:5000";
 
 // --------------------
 // TYPES
@@ -19,9 +19,9 @@ export interface RegisterResponse {
 
 export const login = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<LoginResponse> => {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -42,9 +42,9 @@ export const login = async (
 };
 
 export const register = async (
-  userData: Record<string, unknown>
+  userData: Record<string, unknown>,
 ): Promise<RegisterResponse> => {
-  const res = await fetch(`${API_URL}/auth/register`, {
+  const res = await fetch(`${API_URL}/api/user/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
