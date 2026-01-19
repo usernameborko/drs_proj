@@ -9,18 +9,19 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      const data = await login(email, password);
-      localStorage.setItem("token", data.token);
-      navigate("/profile");
-    } catch (err) {
-      console.error("Login failed:", err);
-      setError("Login failed. Check your credentials.");
-    }
-  };
+  try {
+    const data = await login(email, password);
+    console.log("Login response:", data);
+    localStorage.setItem("access_token", data.access_token);
+    navigate("/profile");
+  } catch (err) {
+    console.error("Login failed:", err);
+    setError("Login failed. Check your credentials.");
+  }
+};
 
   return (
     <div

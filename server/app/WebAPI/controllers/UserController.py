@@ -38,6 +38,60 @@ def delete_user(user_id):
 
     return jsonify(asdict(dto), status)
 
+@user_bp.route("/profile", methods=["GET"])
+@jwt_required()
+def get_profile():
+    try:
+        user_id = get_jwt_identity()
+        if user_id is None:
+            return jsonify({"error": "Invalid token"}), 401
+        
+        dto, status = user_service.get_user_by_id(int(user_id))
+        if dto is None:
+            return jsonify({"error": "User not found"}), status
+        
+        # Convert dataclass to dict for JSON serialization
+        return jsonify({
+            "id": dto.id,
+            "firstName": dto.first_name,
+            "lastName": dto.last_name,
+            "email": dto.email,
+            "dateOfBirth": str(dto.date_of_birth) if dto.date_of_birth else None,
+            "gender": dto.gender,
+            "country": dto.country,
+            "street": dto.street,
+            "number": dto.street_number,
+            "role": dto.role.value if hasattr(dto.role, 'value') else dto.role,
+            "profileImage": dto.profile_image
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@user_bp.route("/profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+    try:
+        user_id = int(get_jwt_identity())
+        data = request.get_json()
+        dto, status = user_service.update_user_profile(user_id, data)
+        if dto is None:
+            return jsonify({"error": "Update failed"}), status
+        return jsonify({"message": "Profile updated", "success": True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@user_bp.route("/profile/image", methods=["POST"])
+@jwt_required()
+def upload_profile_image():
+    try:
+        user_id = int(get_jwt_identity())
+        if "profileImage" not in request.files:
+            return jsonify({"error": "No file", "success": False}), 400
+        file = request.files["profileImage"]
+        result, status = user_service.upload_profile_image(user_id, file)
+        return jsonify(result), status
+    except Exception as e:
+        return jsonify({"error": str(e), "success": False}), 500
 # UPDATE
 @user_bp.route("/update_profile/<int:user_id>", methods=["PUT"])
 @jwt_required()
@@ -101,23 +155,23 @@ def get_all_users():
     return jsonify(asdict(dto)), status
 
 # UPLOAD IMAGE
-@user_bp.route("/upload_image/<int:user_id>", methods=["POST"])
-@jwt_required()
-@role_required(Role.PLAYER, Role.MODERATOR)
-def upload_profile_image(user_id):
-    current_user_id = int(get_jwt_identity())
-    if current_user_id != user_id:
-        return jsonify({"error": "You can only upload your own profile image"}), 403
+# @user_bp.route("/upload_image/<int:user_id>", methods=["POST"])
+# @jwt_required()
+# @role_required(Role.PLAYER, Role.MODERATOR)
+# def upload_profile_image(user_id):
+#     current_user_id = int(get_jwt_identity())
+#     if current_user_id != user_id:
+#         return jsonify({"error": "You can only upload your own profile image"}), 403
 
-    if "image" not in request.files:
-        return jsonify({"error": "No image file part"}), 400
+#     if "image" not in request.files:
+#         return jsonify({"error": "No image file part"}), 400
 
-    file = request.files["image"]
-    if file.filename == "":
-        return jsonify({"error": "No selected file"}), 400
+#     file = request.files["image"]
+#     if file.filename == "":
+#         return jsonify({"error": "No selected file"}), 400
 
-    result, status = user_service.upload_profile_image(user_id, file)
-    return jsonify(result), status
+#     result, status = user_service.upload_profile_image(user_id, file)
+#     return jsonify(result), status
 
 # DOHVAT ZA PRIKAZ NA UI
 @user_bp.route("/profile-image/<int:user_id>", methods=["GET"])

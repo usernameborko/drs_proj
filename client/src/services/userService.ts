@@ -5,7 +5,7 @@ const API_URL = "http://localhost:5000";
 ====================================================== */
 
 const authHeaders = (): HeadersInit => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   return {
     "Content-Type": "application/json",
     Authorization: token ? `Bearer ${token}` : "",
@@ -74,7 +74,14 @@ export const login = async (
   if (!res.ok) throw new Error("Invalid credentials or account blocked");
 
   const data = await res.json();
-  localStorage.setItem("token", data.token);
+
+  console.log("1. data.access_token:", data.access_token);
+  console.log("2. Pre setItem:", localStorage.getItem("access_token"));
+
+  localStorage.setItem("access_token", data.access_token);
+
+  console.log("3. Posle setItem:", localStorage.getItem("access_token"));
+
   return data;
 };
 
@@ -92,7 +99,7 @@ export const register = async (
 };
 
 export const logout = (): void => {
-  localStorage.removeItem("token");
+  localStorage.removeItem("access_token");
 };
 
 /* ======================================================
@@ -100,19 +107,27 @@ export const logout = (): void => {
 ====================================================== */
 
 export const getUserProfile = async (): Promise<UserProfile> => {
-  const res = await fetch(`${API_URL}/api/user/profile`, {
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    throw new Error("No auth token - please login first");
+  }
+
+  const res = await fetch(`${API_URL}/api/users/profile`, {
     method: "GET",
     headers: authHeaders(),
   });
 
-  if (!res.ok) throw new Error("Failed to fetch user profile");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to fetch user profile");
+  }
   return res.json();
 };
 
 export const updateUserProfile = async (
   data: UpdateUserProfileDTO,
 ): Promise<ApiResponse> => {
-  const res = await fetch(`${API_URL}/api/user/profile`, {
+  const res = await fetch(`${API_URL}/api/users/profile`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -124,11 +139,11 @@ export const updateUserProfile = async (
 
 // Nova funkcija za upload profilne slike
 export const updateProfileImage = async (file: File): Promise<ApiResponse> => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   const formData = new FormData();
   formData.append("profileImage", file);
 
-  const res = await fetch(`${API_URL}/api/user/profile/image`, {
+  const res = await fetch(`${API_URL}/api/users/profile/image`, {
     method: "POST",
     headers: {
       Authorization: token ? `Bearer ${token}` : "",
@@ -145,13 +160,16 @@ export const updateProfileImage = async (file: File): Promise<ApiResponse> => {
 ====================================================== */
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
-  const res = await fetch(`${API_URL}/api/users`, {
+  const res = await fetch(`${API_URL}/api/users/all`, {
     method: "GET",
     headers: authHeaders(),
   });
 
   if (!res.ok) throw new Error("Failed to fetch users");
-  return res.json();
+
+  const data = await res.json();
+
+  return data.users || [];
 };
 
 export const deleteUser = async (userId: number): Promise<ApiResponse> => {
@@ -168,7 +186,7 @@ export const changeUserRole = async (
   userId: number,
   role: UserRole,
 ): Promise<ApiResponse> => {
-  const res = await fetch(`${API_URL}/api/users/${userId}/role`, {
+  const res = await fetch(`${API_URL}/api/users/change_role/${userId}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify({ role }),

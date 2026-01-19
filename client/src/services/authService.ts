@@ -5,7 +5,7 @@ const API_URL = "http://localhost:5000";
 // --------------------
 
 export interface LoginResponse {
-  token: string;
+  access_token: string;
 }
 
 export interface RegisterResponse {
@@ -36,7 +36,7 @@ export const login = async (
   const data: LoginResponse = await res.json();
 
   // čuvamo JWT
-  localStorage.setItem("token", data.token);
+  localStorage.setItem("access_token", data.access_token);
 
   return data;
 };
@@ -44,7 +44,7 @@ export const login = async (
 export const register = async (
   userData: Record<string, unknown>,
 ): Promise<RegisterResponse> => {
-  const res = await fetch(`${API_URL}/api/user/register`, {
+  const res = await fetch(`${API_URL}/api/users/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -64,7 +64,7 @@ export const register = async (
 // --------------------
 
 export const getToken = (): string | null => {
-  return localStorage.getItem("token");
+  return localStorage.getItem("access_token");
 };
 
 export const isAuthenticated = (): boolean => {
@@ -72,5 +72,5 @@ export const isAuthenticated = (): boolean => {
 };
 
 export const logout = (): void => {
-  localStorage.removeItem("token");
+  localStorage.removeItem("access_token");
 };

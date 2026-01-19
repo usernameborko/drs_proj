@@ -40,30 +40,35 @@ const ProfilePage: React.FC = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data: UserProfile = await getUserProfile();
+  const fetchData = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setError('Niste ulogovani. Molimo prijavite se.');
+      return;
+    }
 
-        setFormData({
-          firstName: data.firstName || '',
-          lastName: data.lastName || '',
-          email: data.email || '',
-          password: '',
-          dateOfBirth: data.dateOfBirth || '',
-          gender: data.gender || '',
-          country: data.country || '',
-          street: data.street || '',
-          number: data.number || ''
-        });
+    try {
+      const data: UserProfile = await getUserProfile();
+      setFormData({
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        email: data.email || '',
+        password: '',
+        dateOfBirth: data.dateOfBirth || '',
+        gender: data.gender || '',
+        country: data.country || '',
+        street: data.street || '',
+        number: data.number || ''
+      });
+      if (data.profileImage) setCurrentProfileImage(data.profileImage);
+    } catch (err) {
+      setError((err as Error).message || 'Ne mogu da učitam podatke profila.');
+    }
+  };
 
-        if (data.profileImage) setCurrentProfileImage(data.profileImage);
-      } catch (err) {
-        setError('Ne mogu da učitam podatke profila.');
-      }
-    };
+  fetchData();
+}, []);
 
-    fetchData();
-  }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
