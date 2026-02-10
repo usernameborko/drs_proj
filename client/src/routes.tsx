@@ -6,6 +6,7 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import UserListPage from "./pages/UserListPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CreateQuizPage from "./pages/moderator/CreateQuizPage";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -31,6 +32,15 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute>
               <UserListPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/moderator/create-quiz"
+          element={
+            <ProtectedRoute>
+              <CreateQuizPage />
             </ProtectedRoute>
           }
         />
