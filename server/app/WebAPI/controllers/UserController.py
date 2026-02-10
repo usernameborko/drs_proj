@@ -38,6 +38,7 @@ def delete_user(user_id):
 
     return jsonify(asdict(dto), status)
 
+# GET CURRENT USER PROFILE
 @user_bp.route("/profile", methods=["GET"])
 @jwt_required()
 def get_profile():
@@ -50,33 +51,27 @@ def get_profile():
         if dto is None:
             return jsonify({"error": "User not found"}), status
         
-        # Convert dataclass to dict for JSON serialization
-        return jsonify({
-            "id": dto.id,
-            "firstName": dto.first_name,
-            "lastName": dto.last_name,
-            "email": dto.email,
-            "dateOfBirth": str(dto.date_of_birth) if dto.date_of_birth else None,
-            "gender": dto.gender,
-            "country": dto.country,
-            "street": dto.street,
-            "number": dto.street_number,
-            "role": dto.role.value if hasattr(dto.role, 'value') else dto.role,
-            "profileImage": dto.profile_image
-        }), 200
+        return jsonify(asdict(dto)), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# UPDATE CURRENT USER PROFILE
 @user_bp.route("/profile", methods=["PUT"])
 @jwt_required()
 def update_profile():
     try:
         user_id = int(get_jwt_identity())
         data = request.get_json()
+        
+        error = UserValidation.validate_profile_update_data(data)
+        if error:
+            return error
+        
         dto, status = user_service.update_user_profile(user_id, data)
         if dto is None:
             return jsonify({"error": "Update failed"}), status
-        return jsonify({"message": "Profile updated", "success": True}), 200
+        return jsonify(asdict(dto)), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -92,7 +87,8 @@ def upload_profile_image():
         return jsonify(result), status
     except Exception as e:
         return jsonify({"error": str(e), "success": False}), 500
-# UPDATE
+        
+# UPDATE PROFILE BY ID
 @user_bp.route("/update_profile/<int:user_id>", methods=["PUT"])
 @jwt_required()
 @role_required(Role.PLAYER, Role.MODERATOR)
@@ -153,25 +149,6 @@ def get_user_by_id(user_id):
 def get_all_users():
     dto, status = user_service.get_all_users()
     return jsonify(asdict(dto)), status
-
-# UPLOAD IMAGE
-# @user_bp.route("/upload_image/<int:user_id>", methods=["POST"])
-# @jwt_required()
-# @role_required(Role.PLAYER, Role.MODERATOR)
-# def upload_profile_image(user_id):
-#     current_user_id = int(get_jwt_identity())
-#     if current_user_id != user_id:
-#         return jsonify({"error": "You can only upload your own profile image"}), 403
-
-#     if "image" not in request.files:
-#         return jsonify({"error": "No image file part"}), 400
-
-#     file = request.files["image"]
-#     if file.filename == "":
-#         return jsonify({"error": "No selected file"}), 400
-
-#     result, status = user_service.upload_profile_image(user_id, file)
-#     return jsonify(result), status
 
 # DOHVAT ZA PRIKAZ NA UI
 @user_bp.route("/profile-image/<int:user_id>", methods=["GET"])

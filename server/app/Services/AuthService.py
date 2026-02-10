@@ -21,15 +21,15 @@ class AuthService:
         
         #pogresna lozinka
         if not user.verify_password(password):
-            user.failed_attemtps += 1
+            user.failed_attempts += 1
 
-            if user.failed_attemtps >= 3:
+            if user.failed_attempts >= 3:
                 user.blocked_until = datetime.utcnow() + timedelta(minutes=1)
-                user.failed_attemtps = 0
+                user.failed_attempts = 0
         
             return AuthResult.INVALID_CREDENTIALS, None
         
-        user.failed_attemtps = 0
+        user.failed_attempts = 0
         user.blocked_until = None
         db.session.commit()
 

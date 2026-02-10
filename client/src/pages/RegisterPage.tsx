@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { userAPI } from "../api/users/UserAPI";
+import type { RegisterDTO } from "../api/users/IUserAPI";
 
 interface RegisterForm {
   firstName: string;
@@ -39,7 +41,7 @@ const RegistrationPage: React.FC = () => {
     setError("");
     setSuccess("");
 
-    const payload = {
+    const payload: RegisterDTO = {
       first_name: formData.firstName,
       last_name: formData.lastName,
       email: formData.email,
@@ -52,24 +54,12 @@ const RegistrationPage: React.FC = () => {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        setError(errData.message || "Registration failed");
-        return;
-      }
-
-      const data = await response.json();
-      setSuccess(data.message);
+      await userAPI.register(payload);
+      setSuccess("Uspešna registracija! Preusmeravanje na login...");
       setTimeout(() => navigate("/login"), 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Registration error:", err);
-      setError("Registration failed. Try again later.");
+      setError(err.message || "Registration failed. Try again later.");
     }
   };
 

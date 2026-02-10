@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../services/authService";
+import { authAPI } from "../api/auth/AuthAPI";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -12,10 +12,12 @@ const LoginPage: React.FC = () => {
   e.preventDefault();
   setError("");
 
-  try {
-    const data = await login(email, password);
-    console.log("Login response:", data);
+  try { 
+    const data = await authAPI.login({ email, password });
+    console.log("Login response:", data); 
+
     localStorage.setItem("access_token", data.access_token);
+    
     navigate("/profile");
   } catch (err) {
     console.error("Login failed:", err);

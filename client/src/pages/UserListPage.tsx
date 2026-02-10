@@ -1,24 +1,22 @@
 import React, { useEffect, useState } from "react";
-import type { UserProfile, UserRole } from "../services/userService";
-import {
-  getAllUsers,
-  deleteUser,
-  changeUserRole
-} from "../services/userService";
+import { userAPI } from "../api/users/UserAPI";
+import type { UserSummaryDTO } from "../api/users/IUserAPI";
+
+type UserRole = "PLAYER" | "MODERATOR" | "ADMIN";
 
 const UserListPage: React.FC = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<UserSummaryDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await getAllUsers();
-      setUsers(data);
-    } catch (err) {
+      const data = await userAPI.getAllUsers();
+      setUsers(data.users || []);
+    } catch (err: any) {
       console.error("Error fetching users:", err);
-      setError("Failed to load users");
+      setError(err.message || "Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -32,25 +30,25 @@ const UserListPage: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      await deleteUser(userId);
+      await userAPI.deleteUser(userId);
       setUsers((prev) => prev.filter((u) => u.id !== userId));
-    } catch (err) {
+    } catch (err: any) {
       console.error("Delete failed:", err);
-      setError("Failed to delete user");
+      setError(err.message || "Failed to delete user");
     }
   };
 
   const handleRoleChange = async (userId: number, newRole: UserRole) => {
     try {
-      await changeUserRole(userId, newRole);
+      await userAPI.changeUserRole(userId, newRole);
       setUsers((prev) =>
         prev.map((u) =>
           u.id === userId ? { ...u, role: newRole } : u
         )
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error("Role change failed:", err);
-      setError("Failed to change role");
+      setError(err.message || "Failed to change role");
     }
   };
 

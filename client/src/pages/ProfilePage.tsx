@@ -1,12 +1,8 @@
 import React, { useState, useEffect, type ChangeEvent } from 'react';
-import { 
-  getUserProfile, 
-  updateUserProfile, 
-  updateProfileImage, 
-  type UserProfile 
-} from "../services/userService";
+import { userAPI } from "../api/users/UserAPI";
+import type { UserDTO } from "../models/user/UserDTO";
+import type { UpdateProfileDTO } from "../api/users/IUserAPI";
 
-// Tip za formu
 interface UserFormData {
   firstName: string;
   lastName: string;
@@ -18,8 +14,6 @@ interface UserFormData {
   street: string;
   number: string;
 }
-
-type UpdateUserPayload = Partial<UserProfile> & { password?: string };
 
 const ProfilePage: React.FC = () => {
   const [formData, setFormData] = useState<UserFormData>({
@@ -34,35 +28,37 @@ const ProfilePage: React.FC = () => {
     number: ''
   });
 
+  const [userId, setUserId] = useState<number | null>(null);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [currentProfileImage, setCurrentProfileImage] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
   const fetchData = async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      setError('Niste ulogovani. Molimo prijavite se.');
-      return;
-    }
-
     try {
-      const data: UserProfile = await getUserProfile();
+      const data: UserDTO = await userAPI.getProfile()
+      
+      setUserId(data.id);
       setFormData({
-        firstName: data.firstName || '',
-        lastName: data.lastName || '',
-        email: data.email || '',
-        password: '',
-        dateOfBirth: data.dateOfBirth || '',
-        gender: data.gender || '',
-        country: data.country || '',
-        street: data.street || '',
-        number: data.number || ''
-      });
-      if (data.profileImage) setCurrentProfileImage(data.profileImage);
-    } catch (err) {
-      setError((err as Error).message || 'Ne mogu da učitam podatke profila.');
+          firstName: data.firstName || "",
+          lastName: data.lastName || "",
+          email: data.email || "",
+          password: "",
+          dateOfBirth: data.dateOfBirth || "",
+          gender: data.gender || "",
+          country: data.country || "",
+          street: data.street || "",
+          number: data.streetNumber || "",
+        });
+
+      if (data.profileImage) {
+          setCurrentProfileImage(
+            `${import.meta.env.VITE_API_URL}/users/profile-image/${data.id}`
+          );
+        }
+    } catch (err: any) {
+      setError(err.message || "Greška pri učitavanju profila.");
     }
   };
 
@@ -86,36 +82,36 @@ const ProfilePage: React.FC = () => {
     setError('');
 
     try {
-      // 1. Update osnovnih podataka
-      const payload: UpdateUserPayload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+      const updateData: UpdateProfileDTO = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         email: formData.email,
-        dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
         country: formData.country,
         street: formData.street,
-        number: formData.number
+        street_number: formData.number,
       };
 
-      if (formData.password) payload.password = formData.password;
-
-      const res = await updateUserProfile(payload);
-
-      // 2. Update profilne slike, ako je izabrana
-      if (profileImage) {
-        const imageRes = await updateProfileImage(profileImage);
-        if (!imageRes.success) throw new Error(imageRes.message || 'Upload slike nije uspeo');
-
-        // Prikaz nove slike odmah
-        const newImageUrl = URL.createObjectURL(profileImage);
-        setCurrentProfileImage(newImageUrl);
-        setProfileImage(null);
+      if (formData.password) {
+        updateData.password = formData.password;
       }
 
-      setMessage(res?.message || 'Profil uspešno ažuriran.');
-    } catch (err) {
-      setError((err as Error).message || 'Greška pri ažuriranju profila.');
+      await userAPI.updateProfile(updateData);
+
+      if (profileImage) {
+        const upload = await userAPI.uploadProfileImage(profileImage);
+        setMessage(upload.message || "Profil i slika uspešno ažurirani.");
+        setProfileImage(null);
+        if (userId) {
+          setCurrentProfileImage(
+            `${import.meta.env.VITE_API_URL}/users/profile-image/${userId}?t=${Date.now()}`
+          );
+        }
+      } else {
+        setMessage("Profil uspešno ažuriran.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Greška pri ažuriranju profila.");
     }
   };
 
@@ -134,14 +130,12 @@ const ProfilePage: React.FC = () => {
       {message && <p style={{ color: 'green', marginBottom: '1rem' }}>{message}</p>}
 
       <form onSubmit={handleUpdate}>
-        {/* Prikaz trenutne profilne slike */}
         {currentProfileImage && (
           <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
             <img src={currentProfileImage} alt="Profilna" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }} />
           </div>
         )}
 
-        {/* Preview nove slike */}
         {profileImage && (
           <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
             <p>Preview nove slike:</p>
@@ -195,7 +189,6 @@ const ProfilePage: React.FC = () => {
           );
         })}
 
-        {/* Upload profilne slike */}
         <div style={{ marginBottom: '1rem' }}>
           <label>Profilna slika:</label><br />
           <input type="file" accept="image/*" onChange={handleImageChange} />
