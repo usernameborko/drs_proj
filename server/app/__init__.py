@@ -4,9 +4,11 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from app.Extensions.bcrypt import bcrypt
 from app.config import Config
+from app.Extensions.socketio_ext import socketio
 from app.WebAPI.controllers.AuthController import auth_bp
 from app.WebAPI.controllers.UserController import user_bp
 from app.WebAPI.controllers.DbTestController import db_test_bp
+from app.WebAPI.controllers.QuizProxyController import quiz_proxy_bp
 
 jwt = JWTManager()
 
@@ -20,14 +22,17 @@ def create_app():
     CORS(app)
     jwt.init_app(app)
     bcrypt.init_app(app)
-
     db.init_app(app)
+
+    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
+
     with app.app_context():
         db.create_all()
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(user_bp, url_prefix="/api/users")
     app.register_blueprint(db_test_bp, url_prefix="/api/db")
+    app.register_blueprint(quiz_proxy_bp, url_prefix="/api/quizzes")
 
     @app.get("/")
     def home():
