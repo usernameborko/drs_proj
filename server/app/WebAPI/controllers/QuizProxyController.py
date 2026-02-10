@@ -1,11 +1,23 @@
 from flask import Blueprint, request, jsonify
 from app.Extensions.socketio_ext import socketio
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.Domain.models.User import User
+from functools import wraps
 import requests
 import os
 
 quiz_proxy_bp = Blueprint("quiz_proxy", __name__)
-
 QUIZ_SERVICE_URL = "http://localhost:5001/api/quizzes"
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if not user or user.role != 'ADMIN':
+            return jsonify({"msg": "Only Admin can perform this action"}), 403
+        return f(*args, **kwargs)
+    return decorated_function
 
 @quiz_proxy_bp.route("/notify-admin", methods=["POST"])
 def notify_admin():
@@ -22,7 +34,9 @@ def notify_admin():
     return jsonify({"status": "Admin notified via WrbSocket"}), 200
 
 #odobravanje i odbijanje
-@quiz_proxy_bp.route("/<quiz_id>/review", methods=["PATCH"])
+@quiz_proxy_bp.route("/<quiz_id>/review", methods=["PATCH"], endpoint="review_quiz_patch")
+@jwt_required()
+@admin_required
 def review_quiz(quiz_id):
     data = request.json
 
@@ -34,8 +48,15 @@ def review_quiz(quiz_id):
     
 
 #dobijanje svih kvizova (samo admin)
-@quiz_proxy_bp.route("/", methods=["GET"])
+@quiz_proxy_bp.route("/", methods=["GET"], endpoint="get_quizzes")
+@jwt_required()
 def get_all_quizzes_proxy():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    
+    if not user or user.role not in ['ADMIN', 'MODERATOR']:
+        return jsonify({"msg": "Unauthorized"}), 403
+    
     try:
         response = requests.get(f"{QUIZ_SERVICE_URL}")
         return (response.text, response.status_code, response.headers.items())
