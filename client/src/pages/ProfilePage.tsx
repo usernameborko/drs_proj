@@ -1,210 +1,140 @@
-import React, { useState, useEffect, type ChangeEvent } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import { userAPI } from "../api/users/UserAPI";
 import type { UserDTO } from "../models/user/UserDTO";
 import type { UpdateProfileDTO } from "../api/users/IUserAPI";
+import { ProfileViewCard } from "../components/profile/ProfileViewCard";
+import { ProfileEditForm } from "../components/profile/ProfileEditForm";
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
+import { ErrorAlert } from "../components/ui/ErrorAlert";
+import { SuccessAlert } from "../components/ui/SuccessAlert";
 
-interface UserFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  dateOfBirth: string;
-  gender: string;
-  country: string;
-  street: string;
-  number: string;
-}
+type ProfileMode = "view" | "edit";
 
 const ProfilePage: React.FC = () => {
-  const [formData, setFormData] = useState<UserFormData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    dateOfBirth: '',
-    gender: '',
-    country: '',
-    street: '',
-    number: ''
-  });
-
-  const [userId, setUserId] = useState<number | null>(null);
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [currentProfileImage, setCurrentProfileImage] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
+  const [user, setUser] = useState<UserDTO | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [mode, setMode] = useState<ProfileMode>("view");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-  const fetchData = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
-      const data: UserDTO = await userAPI.getProfile()
+      setLoading(true);
+      setError("");
       
-      setUserId(data.id);
-      setFormData({
-          firstName: data.firstName || "",
-          lastName: data.lastName || "",
-          email: data.email || "",
-          password: "",
-          dateOfBirth: data.dateOfBirth || "",
-          gender: data.gender || "",
-          country: data.country || "",
-          street: data.street || "",
-          number: data.streetNumber || "",
-        });
+      const data = await userAPI.getProfile();
+      setUser(data);
 
       if (data.profileImage) {
-          setCurrentProfileImage(
-            `${import.meta.env.VITE_API_URL}/users/profile-image/${data.id}`
-          );
-        }
+        setProfileImageUrl(
+          `${import.meta.env.VITE_API_URL}/users/profile-image/${data.id}?t=${Date.now()}`
+        );
+      }
     } catch (err: any) {
-      setError(err.message || "Greška pri učitavanju profila.");
+      console.error("Error loading profile:", err);
+      setError(err.message || "Failed to load profile");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  fetchData();
-}, []);
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setProfileImage(e.target.files[0]);
-    }
-  };
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage('');
-    setError('');
-
+  const handleSave = async (data: UpdateProfileDTO, imageFile: File | null) => {
     try {
-      const updateData: UpdateProfileDTO = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
-        gender: formData.gender,
-        country: formData.country,
-        street: formData.street,
-        street_number: formData.number,
-      };
+      setSaving(true);
+      setError("");
+      setSuccess("");
 
-      if (formData.password) {
-        updateData.password = formData.password;
+      // Update profile data
+      const updatedUser = await userAPI.updateProfile(data);
+      setUser(updatedUser);
+
+      // Upload image if provided
+      if (imageFile) {
+        await userAPI.uploadProfileImage(imageFile);
+        setProfileImageUrl(
+          `${import.meta.env.VITE_API_URL}/users/profile-image/${updatedUser.id}?t=${Date.now()}`
+        );
       }
 
-      await userAPI.updateProfile(updateData);
-
-      if (profileImage) {
-        const upload = await userAPI.uploadProfileImage(profileImage);
-        setMessage(upload.message || "Profil i slika uspešno ažurirani.");
-        setProfileImage(null);
-        if (userId) {
-          setCurrentProfileImage(
-            `${import.meta.env.VITE_API_URL}/users/profile-image/${userId}?t=${Date.now()}`
-          );
-        }
-      } else {
-        setMessage("Profil uspešno ažuriran.");
-      }
+      setSuccess("Profile updated successfully!");
+      setMode("view");
     } catch (err: any) {
-      setError(err.message || "Greška pri ažuriranju profila.");
+      console.error("Error updating profile:", err);
+      setError(err.message || "Failed to update profile");
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    setMode("view");
+    setError("");
   };
 
   return (
-    <div style={{
-      maxWidth: '500px',
-      margin: '2rem auto',
-      padding: '2rem',
-      border: '1px solid #ddd',
-      borderRadius: '8px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      backgroundColor: '#fff'
-    }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Profil korisnika</h2>
-      {error && <p style={{ color: 'red', marginBottom: '1rem' }}>{error}</p>}
-      {message && <p style={{ color: 'green', marginBottom: '1rem' }}>{message}</p>}
-
-      <form onSubmit={handleUpdate}>
-        {currentProfileImage && (
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <img src={currentProfileImage} alt="Profilna" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }} />
-          </div>
-        )}
-
-        {profileImage && (
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <p>Preview nove slike:</p>
-            <img src={URL.createObjectURL(profileImage)} alt="Preview" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }} />
-          </div>
-        )}
-
-        {Object.keys(formData).map((key) => {
-          const field = key as keyof UserFormData;
-          const labelMap: Record<keyof UserFormData, string> = {
-            firstName: 'First Name',
-            lastName: 'Last Name',
-            email: 'Email',
-            password: 'Password',
-            dateOfBirth: 'Datum rođenja',
-            gender: 'Pol',
-            country: 'Država',
-            street: 'Ulica',
-            number: 'Broj'
-          };
-
-          if (field === 'gender') {
-            return (
-              <div key={field} style={{ marginBottom: '1rem' }}>
-                <label>{labelMap[field]}:</label><br />
-                <select name="gender" value={formData.gender} onChange={handleChange} required
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}>
-                  <option value="">Odaberite pol</option>
-                  <option value="Male">Muški</option>
-                  <option value="Female">Ženski</option>
-                  <option value="Other">Ostalo</option>
-                </select>
-              </div>
-            );
-          }
-
-          const inputType = field === 'password' ? 'password' : field === 'dateOfBirth' ? 'date' : 'text';
-          return (
-            <div key={field} style={{ marginBottom: '1rem' }}>
-              <label>{labelMap[field]}:</label><br />
-              <input
-                type={inputType}
-                name={field}
-                value={formData[field]}
-                onChange={handleChange}
-                placeholder={field === 'password' ? 'Ostavite prazno da ne promenite' : ''}
-                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                required={field !== 'password'}
-              />
-            </div>
-          );
-        })}
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Profilna slika:</label><br />
-          <input type="file" accept="image/*" onChange={handleImageChange} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-indigo-50">
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        {/* Page Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
+            {mode === "view" ? "My Profile" : "Edit Profile"}
+          </h1>
+          <p className="text-gray-500 mt-2">
+            {mode === "view" 
+              ? "View and manage your personal information" 
+              : "Update your profile details"
+            }
+          </p>
         </div>
 
-        <button type="submit" style={{
-          width: '100%',
-          padding: '0.75rem',
-          backgroundColor: '#4CAF50',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          fontSize: '1rem',
-          cursor: 'pointer'
-        }}>Ažuriraj profil</button>
-      </form>
+        {/* Alerts */}
+        {error && (
+          <ErrorAlert 
+            message={error} 
+            onDismiss={() => setError("")} 
+          />
+        )}
+
+        {success && (
+          <SuccessAlert 
+            message={success} 
+            onDismiss={() => setSuccess("")} 
+          />
+        )}
+
+        {/* Content */}
+        {loading ? (
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8">
+            <LoadingSpinner message="Loading profile..." />
+          </div>
+        ) : user ? (
+          mode === "view" ? (
+            <ProfileViewCard
+              user={user}
+              profileImageUrl={profileImageUrl}
+              onEditClick={() => setMode("edit")}
+            />
+          ) : (
+            <ProfileEditForm
+              user={user}
+              profileImageUrl={profileImageUrl}
+              onSave={handleSave}
+              onCancel={handleCancel}
+              isLoading={saving}
+            />
+          )
+        ) : (
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 text-center">
+            <p className="text-gray-500">No profile data available.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

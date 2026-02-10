@@ -1,18 +1,11 @@
-import AppRoutes from './routes';
-import './index.css';
+import React from "react";
+import AppRoutes from "./routes";
+import "./index.css";
 
 const App: React.FC = () => {
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h2>DRS Quiz Platform</h2>
-      </header>
-      <main className="app-main">
-        <AppRoutes />
-      </main>
-      <footer className="app-footer">
-        <p>&copy; 2026 DRS Platform</p>
-      </footer>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-violet-50 to-indigo-50">
+      <AppRoutes />
     </div>
   );
 };

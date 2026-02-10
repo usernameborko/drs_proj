@@ -1,43 +1,44 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ProfilePage from './pages/ProfilePage';
-import UserListPage from './pages/UserListPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Navbar } from "./components/navbar/Navbar";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
+import UserListPage from "./pages/UserListPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-const AppRoutes: React.FC = () => (
-  
-  <Router>
-    {/* Navbar će biti prikazan na svim stranicama */}
-    <Navbar />
-    
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <UserListPage />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Možeš dodati fallback ili 404 stranicu */}
-    </Routes>
-  </Router>
-);
+const AppRoutes: React.FC = () => {
+  return (
+    <Router>
+      <Navbar />
+
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UserListPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Dodati i “Not Found” rutu */}
+      </Routes>
+    </Router>
+  );
+};
 
 export default AppRoutes;
