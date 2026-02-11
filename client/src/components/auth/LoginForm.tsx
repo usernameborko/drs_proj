@@ -31,10 +31,21 @@ export const LoginForm: React.FC = () => {
       localStorage.setItem("access_token", data.access_token);
       window.dispatchEvent(new Event("login"));
       navigate("/profile");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login failed:", err);
-      setServerError("Login failed. Please check your credentials.");
-      setEmail("");
+
+      const status = err.response?.status || err.status;
+      
+      const serverMsg = err.response?.data?.message || err.message;
+
+      if (status === 403 || serverMsg.includes("blocked")) {
+        setServerError("Account temporarily blocked. Please try again in 1 minute.");
+      } else if (status === 401 || serverMsg.includes("credentials")) {
+        setServerError("Invalid email or password.");
+      } else {
+        setServerError(serverMsg || "Something went wrong. Please try again later.");
+      }
+      
       setPassword("");
       setSubmitted(false);
     } finally {

@@ -27,6 +27,7 @@ class AuthService:
                 user.blocked_until = datetime.utcnow() + timedelta(minutes=1)
                 user.failed_attempts = 0
         
+            db.session.commit()
             return AuthResult.INVALID_CREDENTIALS, None
         
         user.failed_attempts = 0
