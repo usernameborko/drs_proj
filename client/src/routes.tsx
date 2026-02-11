@@ -10,6 +10,8 @@ import CreateQuizPage from "./pages/moderator/CreateQuizPage";
 import QuizApprovalPage from "./pages/admin/QuizApprovalPage";
 import PlayerQuizzesPage from "./pages/player/PlayerQuizzesPage";
 import PlayQuizPage from "./pages/player/PlayQuizPage";
+import LeaderboardPage from "./pages/leaderboard/LeaderboardPage";
+
 
 const AppRoutes: React.FC = () => {
   return (
@@ -71,6 +73,14 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute>
               <PlayQuizPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/leaderboard/:quizId"
+          element={
+            <ProtectedRoute>
+              <LeaderboardPage />
             </ProtectedRoute>
           }
         />
