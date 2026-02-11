@@ -4,7 +4,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.Domain.models.User import User
 from functools import wraps
 import requests
-import os
+from app.Database.db import db
+from app.Domain.models.Result import Result
+
+
 
 quiz_proxy_bp = Blueprint("quiz_proxy", __name__)
 QUIZ_SERVICE_URL = "http://localhost:5001/api/quizzes"
@@ -62,3 +65,40 @@ def get_all_quizzes_proxy():
         return (response.text, response.status_code, response.headers.items())
     except Exception as e:
         return jsonify({"error": f"Could not reach Quiz Service: {str(e)}"}), 500
+    
+
+@quiz_proxy_bp.route("/<quiz_id>/submit", methods=["POST"])
+@jwt_required()
+def submit_and_save_result(quiz_id):
+    current_user_id = get_jwt_identity()
+    user_answers = request.json #odgovori koje salje front
+
+    try:
+        quiz_service_res = requests.post(
+            f"http://localhost:5001/api/quizzes/{quiz_id}/submit", json=user_answers
+        )
+
+        if quiz_service_res.status_code != 200:
+            return quiz_service_res.text, quiz_service_res.status_code
+        
+        result_data = quiz_service_res.json()
+
+        new_result = Result(
+            user_id = current_user_id,
+            quiz_id = quiz_id,
+            quiz_title = result_data['quiz_title'],
+            score = result_data['correct_questions'],
+            total_questions = result_data['total_questions'],
+            percentage = result_data['percentage']
+        )
+
+        db.session.add(new_result)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Result saved successfully",
+            "details": result_data
+        }), 200
+    
+    except Exception as e:
+        return jsonify({"error": f"Failed to process quiz: {str(e)}"}), 500
