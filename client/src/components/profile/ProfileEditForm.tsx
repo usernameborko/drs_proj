@@ -1,7 +1,6 @@
-// src/components/profile/ProfileEditForm.tsx
 import React, { useState, type ChangeEvent } from "react";
 import type { UserDTO } from "../../models/user/UserDTO";
-import type { UpdateProfileDTO } from "../../api/users/IUserAPI";
+import type { UpdateProfileDTO } from "../../models/user/UpdateProfileDTO";
 import { ProfileAvatar } from "./ProfileAvatar";
 
 interface ProfileEditFormProps {

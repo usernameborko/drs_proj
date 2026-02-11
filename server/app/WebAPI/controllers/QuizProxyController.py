@@ -246,3 +246,23 @@ def get_quiz_details_proxy(quiz_id):
         return (response.text, response.status_code, response.headers.items())
     except Exception as e:
         return jsonify({"error": f"Could not reach Quiz Service: {str(e)}"}), 500
+
+@quiz_proxy_bp.route("/<quiz_id>", methods=["DELETE"])
+@jwt_required()
+def delete_quiz(quiz_id):
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    payload = {
+        "requester_role": user.role.value,
+        "requester_id": str(user.id),
+    }
+
+    try:
+        response = requests.delete(f"{QUIZ_SERVICE_URL}/{quiz_id}", json=payload)
+        return (response.text, response.status_code, response.headers.items())
+    except Exception as e:
+        return jsonify({"error": f"Could not reach Quiz Service: {str(e)}"}), 500
