@@ -87,7 +87,7 @@ def submit_and_save_result(quiz_id):
             json=user_answers
         )
 
-        if quiz_service_res.status_code != 202:
+        if quiz_service_res.status_code == 202:
             return jsonify({
                 "message": "Quiz successfully sent for processing. You can continue working."
             }), 202

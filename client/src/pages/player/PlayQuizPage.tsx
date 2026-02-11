@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // Dodat useNavigate
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { ErrorAlert } from "../../components/ui/ErrorAlert";
 
@@ -19,13 +19,13 @@ interface Quiz {
 
 const PlayQuizPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<{ [key: number]: string[] }>({});
   const [elapsed, setElapsed] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [result, setResult] = useState<any>(null);
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -50,7 +50,16 @@ const PlayQuizPage: React.FC = () => {
 
   useEffect(() => {
     if (quiz && !submitted) {
-      const timer = setInterval(() => setElapsed((t) => t + 1), 1000);
+      const timer = setInterval(() => {
+        setElapsed((prev) => {
+          if (prev >= quiz.duration) {
+            clearInterval(timer);
+            handleSubmit();
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
       return () => clearInterval(timer);
     }
   }, [quiz, submitted]);
@@ -66,7 +75,8 @@ const PlayQuizPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!quiz) return;
+    if (!quiz || submitted) return; // Sprečava duplo slanje
+    
     try {
       setSubmitted(true);
       const token = localStorage.getItem("access_token");
@@ -92,17 +102,18 @@ const PlayQuizPage: React.FC = () => {
       const res = await fetch(`http://localhost:5000/api/quizzes/${quiz._id}/submit`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error(`Submit failed (${res.status})`);
-      const data = await res.json();
-      setResult(data);
+      
+      // Ovde ne setujemo result jer je obrada asinhrona (vratilo je 202)
     } catch (err: any) {
       setError(err.message || "Failed to submit quiz");
+      setSubmitted(false);
     }
   };
 
@@ -110,34 +121,28 @@ const PlayQuizPage: React.FC = () => {
   if (error) return <ErrorAlert message={error} onDismiss={() => setError("")} />;
   if (!quiz) return <div className="text-center py-12">Quiz not found.</div>;
 
-  if (submitted && result) {
+  // Modifikovan ekran nakon slanja koji ne prikazuje nule
+  if (submitted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-violet-50 to-indigo-50 p-6">
         <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 w-full max-w-xl text-center border border-white/60">
+          <div className="text-5xl mb-4">📧</div>
           <h2 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
-            Quiz Completed
+            Quiz Submitted!
           </h2>
-          <p className="text-gray-600 mb-4">{quiz.title}</p>
-          <div className="text-lg font-medium text-gray-800 mb-2">
-            ✅ Correct: {result.correct_questions ?? 0}
+          <p className="text-gray-700 mb-6">
+            Your answers for <strong>{quiz.title}</strong> have been sent for processing.
+          </p>
+          <div className="bg-violet-50 p-4 rounded-xl text-violet-800 text-sm mb-6">
+            Since the evaluation is asynchronous, please check your email for the detailed results and score. 
+            This usually takes a few moments.
           </div>
-          <div className="text-lg font-medium text-gray-800 mb-2">
-            ❌ Total: {result.total_questions ?? 0}
-          </div>
-          <div className="text-2xl font-bold text-violet-600 mt-2">
-            Score: {Number(result.percentage ?? 0)}%
-          </div>
-          <div className="mt-6">
-            {result.passed ? (
-              <p className="text-emerald-600 font-semibold">
-                Congratulations! You passed.
-              </p>
-            ) : (
-              <p className="text-red-500 font-semibold">
-                You didn’t pass — try again!
-              </p>
-            )}
-          </div>
+          <button
+            onClick={() => navigate("/quizzes")}
+            className="px-8 py-3 bg-gradient-to-r from-violet-500 to-indigo-500 text-white rounded-xl font-semibold hover:scale-105 transition-all"
+          >
+            Back to Quizzes
+          </button>
         </div>
       </div>
     );
