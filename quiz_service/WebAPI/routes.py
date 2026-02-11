@@ -3,6 +3,7 @@ from Database.database import db_mongo
 from Domain.DTOs.dtos import QuizDTO, QuestionDTO
 import requests
 import os
+from bson import ObjectId
 
 quiz_db = Blueprint("quiz_db", __name__)
 collection = db_mongo.get_collection("quizzes")
@@ -76,3 +77,54 @@ def get_quizzes():
     for q in quizzes:
         q['_id'] = str(q['_id'])
     return jsonify(quizzes), 200
+
+#listanje samo odobrenih kvizova
+@quiz_db.route("/published", methods=["GET"])
+def get_published_quizzes():
+    quizzes = list(collection.find({"status": "APPROVED"}))
+
+    for q in quizzes:
+        q['_id'] = str(q['_id'])
+        for question in q.get('questions', []):
+            if 'correct_answers' in question:
+                del question['correct_answer']
+            
+        
+    return jsonify(quizzes), 200
+
+#slanje odgovora i racunanje bodova
+@quiz_db.route("/<quiz_id>/submit", methods=["POST"])
+def submit_quiz(quiz_id):
+    data = request.json
+    user_answers = data.get('answers', [])
+
+    quiz = collection.find_one({"_id": ObjectId(quiz_id)})
+    if not quiz:
+        return jsonify({"message": "Quiz not fount"}), 404
+    
+    correct_question_count = 0
+    total_points = sum(int(q.get('points', 0)) for q in quiz['questions'])
+    achived_points = 0
+
+    for idx, question in enumerate(quiz['questions']):
+        user_ans = next((a for a in user_answers if a.get('question_index') == idx), None)
+
+        if user_ans:
+            u_selected = [str(x).strip() for x in user_ans.get('selected', [])]
+            db_correct = [str(x).strip() for x in question.get('correct_answers', [])]
+
+            if set(u_selected) == set(db_correct):
+                achived_points += int(question.get('points', 0))
+                correct_question_count += 1
+
+    
+    percentage = (achived_points / total_points * 100) if total_points > 0 else 0
+
+    return jsonify({
+        "quiz_title": quiz.get('title'),
+        "correct_questions": correct_question_count,
+        "total_questions": len(quiz['questions']),
+        "achieved_points": achived_points,
+        "percentage": round(percentage, 2),
+        "passed": percentage >= 60
+    }), 200
