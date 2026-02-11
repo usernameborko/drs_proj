@@ -7,10 +7,22 @@ from bson import ObjectId
 import time
 from multiprocessing import Process
 from Extensions.EmailSender import EmailSender
+import json
+import redis
+
 
 quiz_db = Blueprint("quiz_db", __name__)
 collection = db_mongo.get_collection("quizzes")
 email_sender = EmailSender()
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+
+#pomocna funkcija za brisanje kesa
+def clear_quiz_cache():
+    try:
+        redis_client.delete("published_quizzes")
+    except Exception as e:
+        print(f"Redis error: {e}")
 
 #kreirnaje kviza (moderatro)
 @quiz_db.route("/", methods=["POST"])
@@ -54,8 +66,6 @@ def create_quiz():
 #promjena statusa kviza
 @quiz_db.route("/<quiz_id>/status", methods=["PATCH"])
 def update_quiz_status(quiz_id):
-    from bson import ObjectId
-
     data = request.json
     new_status = data.get("status") #approved ili rejected
     reason = data.get("rejection_reason", "")
@@ -72,6 +82,8 @@ def update_quiz_status(quiz_id):
     if result.matched_count == 0:
         return jsonify({"message": "Quiz not found"}), 404
     
+    clear_quiz_cache() #brisemo kes posto se status promijenio
+    
     return jsonify({"message": f"Quiz status updated to {new_status}"}), 200
 
 #listanje svih kvizova
@@ -85,6 +97,17 @@ def get_quizzes():
 #listanje samo odobrenih kvizova
 @quiz_db.route("/published", methods=["GET"])
 def get_published_quizzes():
+    #prvo probamo iz kesa
+    try:
+        cached_quizzes = redis_client.get("published_quizzes")
+        if cached_quizzes:
+            print("CACHE HIT: redis data")
+            return jsonify(json.loads(cached_quizzes)), 200
+    except Exception as e:
+        print(f"Redis error (hit): {e}")
+
+    #ako nema u kesu uzimamo iz mognoDB
+    print("CACHE MISS: MongoDB data")
     quizzes = list(collection.find({"status": "APPROVED"}))
 
     for q in quizzes:
@@ -92,6 +115,11 @@ def get_published_quizzes():
         for question in q.get('questions', []):
             question.pop("correct_answers", None)
             
+    #sacuvaj rezultat u redis na svakih 5 min
+    try:
+        redis_client.setex("published_quizzes", 300, json.dumps(quizzes))
+    except Exception as e:
+        print(f"Redis error (set): {e}")
         
     return jsonify(quizzes), 200
 
@@ -180,6 +208,7 @@ def submit_quiz(quiz_id):
         "status": "processing"
     }), 202
     
+#brisanje kviza
 @quiz_db.route("/<quiz_id>", methods=["DELETE"])
 def delete_quiz(quiz_id):
     data = request.get_json() or {}
@@ -194,6 +223,10 @@ def delete_quiz(quiz_id):
         return jsonify({"message": "Forbidden"}), 403
 
     collection.delete_one({"_id": ObjectId(quiz_id)})
+
+    #brisemo kes
+    clear_quiz_cache()
+
     return jsonify({"status": "deleted"}), 200
 
 # dobijanje samo jednog kviza
