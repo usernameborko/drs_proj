@@ -6,6 +6,7 @@ import { socketService } from "../../services/socketService";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { ErrorAlert } from "../../components/ui/ErrorAlert";
 import { SuccessAlert } from "../../components/ui/SuccessAlert";
+import DownloadReportButton from "../../components/admin/quizzes/DownloadReportButton";
 
 interface QuizItem {
   _id: string;
@@ -82,43 +83,45 @@ const QuizApprovalPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-indigo-50 px-6 py-12">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
-            Quiz Review & Management
-          </h1>
-          <p className="mt-1 text-gray-500">
-            Approve, reject, or delete submitted quizzes
-          </p>
-        </div>
-
-        {error && <ErrorAlert message={error} onDismiss={() => setError("")} />}
-        {success && <SuccessAlert message={success} onDismiss={() => setSuccess("")} />}
-
-        {loading ? (
-          <LoadingSpinner message="Loading quizzes..." />
-        ) : (
-          <QuizApprovalTable
-            quizzes={quizzes}
-            onReviewClick={(quiz) => {
-              setSelectedQuiz(quiz);
-              setDialogOpen(true);
-            }}
-            onDeleteClick={handleDelete}
-          />
-        )}
-
-        <QuizReviewDialog
-          open={dialogOpen}
-          quizTitle={selectedQuiz?.title || ""}
-          onClose={() => setDialogOpen(false)}
-          onApprove={handleApprove}
-          onReject={handleReject}
-        />
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-indigo-50 px-6 py-12">
+    <div className="max-w-6xl mx-auto">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
+          Quiz Review & Management
+        </h1>
+        <p className="mt-1 text-gray-500">
+          Approve, reject, or delete submitted quizzes
+        </p>
       </div>
+
+      {/* OVDE UBACI DUGME */}
+      <div className="flex justify-end mb-6">
+        <DownloadReportButton quizzes={quizzes} />
+      </div>
+
+      {error && <ErrorAlert message={error} onDismiss={() => setError("")} />}
+      {success && <SuccessAlert message={success} onDismiss={() => setSuccess("")} />}
+
+      {loading ? (
+        <LoadingSpinner message="Loading quizzes..." />
+      ) : (
+        <QuizApprovalTable
+          quizzes={quizzes}
+          onReviewClick={(quiz) => { setSelectedQuiz(quiz); setDialogOpen(true); }}
+          onDeleteClick={handleDelete}
+        />
+      )}
+
+      <QuizReviewDialog
+        open={dialogOpen}
+        quizTitle={selectedQuiz?.title || ""}
+        onClose={() => setDialogOpen(false)}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
     </div>
-  );
+  </div>
+);
 };
 
 export default QuizApprovalPage;
