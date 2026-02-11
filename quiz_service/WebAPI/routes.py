@@ -4,9 +4,13 @@ from Domain.DTOs.dtos import QuizDTO, QuestionDTO
 import requests
 import os
 from bson import ObjectId
+import time
+from multiprocessing import Process
+from Extensions.EmailSender import EmailSender
 
 quiz_db = Blueprint("quiz_db", __name__)
 collection = db_mongo.get_collection("quizzes")
+email_sender = EmailSender()
 
 #kreirnaje kviza (moderatro)
 @quiz_db.route("/", methods=["POST"])
@@ -92,21 +96,16 @@ def get_published_quizzes():
         
     return jsonify(quizzes), 200
 
-#slanje odgovora i racunanje bodova
-@quiz_db.route("/<quiz_id>/submit", methods=["POST"])
-def submit_quiz(quiz_id):
-    data = request.json
-    user_answers = data.get('answers', [])
+#pokretanje procesa
+def process_quick_task(quiz_data, user_answers, user_email):
+    print(f"Asynchronous processing started for {user_email}...")
+    time.sleep(10) #simulacija obrade
 
-    quiz = collection.find_one({"_id": ObjectId(quiz_id)})
-    if not quiz:
-        return jsonify({"message": "Quiz not fount"}), 404
-    
-    correct_question_count = 0
-    total_points = sum(int(q.get('points', 0)) for q in quiz['questions'])
-    achived_points = 0
+    correct_count = 0
+    total_points = sum(int(q.get('points', 0)) for q in quiz_data['questions'])
+    achieved_points = 0
 
-    for idx, question in enumerate(quiz['questions']):
+    for idx, question in enumerate(quiz_data['questions']):
         user_ans = next((a for a in user_answers if a.get('question_index') == idx), None)
 
         if user_ans:
@@ -114,17 +113,45 @@ def submit_quiz(quiz_id):
             db_correct = [str(x).strip() for x in question.get('correct_answers', [])]
 
             if set(u_selected) == set(db_correct):
-                achived_points += int(question.get('points', 0))
-                correct_question_count += 1
+                achieved_points += int(question.get('points', 0))
+                correct_count += 1
 
     
-    percentage = (achived_points / total_points * 100) if total_points > 0 else 0
+    percentage = (achieved_points / total_points * 100) if total_points > 0 else 0
+
+    print(f"Finished calculating, achived: {achieved_points} points. Sending to {user_email}")
+
+    try:
+        email_sender.send_quiz_result_email(
+            to_email=user_email,
+            quiz_title=quiz_data.get('title', 'Kviz'),
+            score=correct_count,
+            total=len(quiz_data['questions']),
+            percentage=round(percentage, 2)
+        )
+        print(f"Email successfully sent to {user_email}")
+    except Exception as e:
+        print(f"Error sending email in background process: {e}")
+
+#slanje odgovora i racunanje bodova
+@quiz_db.route("/<quiz_id>/submit", methods=["POST"])
+def submit_quiz(quiz_id):
+    data = request.json
+    user_answers = data.get('answers', [])
+    user_email = data.get('user_email') 
+
+    quiz = collection.find_one({"_id": ObjectId(quiz_id)})
+    if not quiz:
+        return jsonify({"message": "Quiz not fount"}), 404
+    
+    p = Process(target=process_quick_task, args=(quiz, user_answers, user_email))
+    p.start()
 
     return jsonify({
-        "quiz_title": quiz.get('title'),
-        "correct_questions": correct_question_count,
-        "total_questions": len(quiz['questions']),
-        "achieved_points": achived_points,
-        "percentage": round(percentage, 2),
-        "passed": percentage >= 60
-    }), 200
+        "message": "Quiz processing is started asynchronously. The results will be sent to you by email.",
+        "status": "processing"
+    }), 202
+    
+
+
+
