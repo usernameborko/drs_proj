@@ -1,10 +1,11 @@
 import type { IQuizAPI, QuizCreateDTO, QuizCreatedResponse } from "./IQuizAPI";
 
-const BASE_URL = import.meta.env.VITE_API_URL
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export class QuizAPI implements IQuizAPI {
   async createQuiz(data: QuizCreateDTO): Promise<QuizCreatedResponse> {
-    const response = await fetch(`${BASE_URL}/quizzes/`, {
+    const QUIZ_SERVICE_URL = "http://localhost:5001/api/quizzes";
+    const response = await fetch(`${QUIZ_SERVICE_URL}/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -19,11 +20,11 @@ export class QuizAPI implements IQuizAPI {
   }
 
   async getAllQuizzes(): Promise<any[]> {
-  const token = localStorage.getItem("access_token");
-  
-  const response = await fetch(`${BASE_URL}/quizzes/`, {
+    const token = localStorage.getItem("access_token");
+
+    const response = await fetch(`${BASE_URL}/quizzes/`, {
       headers: {
-        "Authorization": token ? `Bearer ${token}` : "",
+        Authorization: token ? `Bearer ${token}` : "",
       },
     });
 
@@ -36,17 +37,17 @@ export class QuizAPI implements IQuizAPI {
   }
 
   async reviewQuiz(
-  quizId: string,
-  status: "APPROVED" | "REJECTED",
-  rejection_reason?: string
-) {
-  const token = localStorage.getItem("access_token");
+    quizId: string,
+    status: "APPROVED" | "REJECTED",
+    rejection_reason?: string
+  ) {
+    const token = localStorage.getItem("access_token");
 
-  const response = await fetch(`${BASE_URL}/quizzes/${quizId}/review`, {
+    const response = await fetch(`${BASE_URL}/quizzes/${quizId}/review`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": token ? `Bearer ${token}` : "",
+        Authorization: token ? `Bearer ${token}` : "",
       },
       body: JSON.stringify({ status, rejection_reason }),
     });
@@ -58,13 +59,11 @@ export class QuizAPI implements IQuizAPI {
 
     return response.json();
   }
-    async getApprovedQuizzes(): Promise<any[]> {
-    const token = localStorage.getItem("access_token");
 
-    const response = await fetch(`${BASE_URL}/quizzes/`, {
-      headers: {
-        "Authorization": token ? `Bearer ${token}` : "",
-      },
+    async getApprovedQuizzes(): Promise<any[]> {
+    const response = await fetch(`http://localhost:5001/api/quizzes/published`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -72,16 +71,15 @@ export class QuizAPI implements IQuizAPI {
       throw new Error(`Failed to load quizzes (${response.status}): ${err}`);
     }
 
-    const quizzes = await response.json();
-    return quizzes.filter((q: any) => q.status === "APPROVED");
+    return await response.json();
   }
 
-    async deleteQuiz(quizId: string): Promise<void> {
+  async deleteQuiz(quizId: string): Promise<void> {
     const token = localStorage.getItem("access_token");
     const response = await fetch(`${BASE_URL}/quizzes/${quizId}`, {
       method: "DELETE",
       headers: {
-        "Authorization": token ? `Bearer ${token}` : "",
+        Authorization: token ? `Bearer ${token}` : "",
       },
     });
 
@@ -90,7 +88,6 @@ export class QuizAPI implements IQuizAPI {
       throw new Error(`Failed to delete quiz (${response.status}): ${text}`);
     }
   }
-  
 }
 
 export const quizAPI = new QuizAPI();
