@@ -1,8 +1,7 @@
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
 import os
 from dataclasses import asdict
-from flask_jwt_extended import jwt_required, get_jwt_identity
-
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from app.Services.UserService import UserService
 from app.WebAPI.validation.UserValidation import UserValidation
 from app.Domain.enums.role import Role
@@ -21,10 +20,18 @@ def create_user():
         return error
 
     dto, status = user_service.create_user(data)
-    if not dto:
+    if not dto or status != 201:
         return jsonify({"error": "User already exists or invalid data"}), 400
 
-    return jsonify(asdict(dto)), status
+    token = create_access_token(
+        identity=str(dto.id),
+        additional_claims={"role": "PLAYER"}
+    )
+
+    return jsonify({
+        "user": asdict(dto),
+        "access_token": token
+    }), 201
 
 # DELETE
 @user_bp.route("/delete/<int:user_id>", methods=["DELETE"])

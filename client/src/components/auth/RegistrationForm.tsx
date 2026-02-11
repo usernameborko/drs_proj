@@ -129,8 +129,13 @@ export const RegisterForm: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await userAPI.register(form);
-      navigate("/profile");
+      const result = await userAPI.register(form);
+      
+      if (result.access_token) {
+        navigate("/profile");
+      } else {
+        throw new Error("Registration succeeded but no token was returned.");
+      }
     } catch (err: any) {
       console.error("Registration failed:", err);
       setServerError(err.message || "Registration failed. Please try again.");
