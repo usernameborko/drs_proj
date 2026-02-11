@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { quizAPI } from "../../api/quizzes/QuizAPI";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { ErrorAlert } from "../../components/ui/ErrorAlert";
 
@@ -21,10 +20,10 @@ interface Quiz {
 const PlayQuizPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [answers, setAnswers] = useState<{ [key: number]: string[] }>({});
   const [elapsed, setElapsed] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<any>(null);
 
@@ -32,9 +31,10 @@ const PlayQuizPage: React.FC = () => {
     const fetchQuiz = async () => {
       try {
         setLoading(true);
-        const quizzes = await quizAPI.getApprovedQuizzes();
-        const q = quizzes.find((x) => x._id === id);
-        setQuiz(q || null);
+        const res = await fetch(`http://localhost:5001/api/quizzes/${id}`);
+        if (!res.ok) throw new Error(`Failed to load quiz (${res.status})`);
+        const data = await res.json();
+        setQuiz(data);
       } catch (err: any) {
         setError(err.message || "Failed to load quiz");
       } finally {
@@ -46,12 +46,12 @@ const PlayQuizPage: React.FC = () => {
 
   useEffect(() => {
     if (quiz && !submitted) {
-      const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
+      const timer = setInterval(() => setElapsed((t) => t + 1), 1000);
       return () => clearInterval(timer);
     }
   }, [quiz, submitted]);
 
-  const handleOptionToggle = (qIdx: number, opt: string) => {
+  const toggleOption = (qIdx: number, opt: string) => {
     setAnswers((prev) => {
       const current = prev[qIdx] || [];
       const updated = current.includes(opt)
@@ -65,28 +65,38 @@ const PlayQuizPage: React.FC = () => {
     if (!quiz) return;
     try {
       setSubmitted(true);
+      const token = localStorage.getItem("access_token");
+      let userEmail = "";
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          userEmail = payload.email || "";
+        } catch {
+          userEmail = "";
+        }
+      }
+
       const payload = {
+        user_email: userEmail,
         answers: Object.entries(answers).map(([idx, selected]) => ({
           question_index: parseInt(idx, 10),
           selected,
         })),
+        time_spent: elapsed,
       };
 
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/quizzes/${quiz._id}/submit`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`http://localhost:5001/api/quizzes/${quiz._id}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) throw new Error(`Submit failed (${res.status})`);
       const data = await res.json();
-      setResult(data.details || data);
+      setResult(data);
     } catch (err: any) {
       setError(err.message || "Failed to submit quiz");
     }
@@ -104,14 +114,24 @@ const PlayQuizPage: React.FC = () => {
             Quiz Completed
           </h2>
           <p className="text-gray-600 mb-4">{quiz.title}</p>
-          <div className="text-lg font-medium text-gray-800 mb-2">✅ Correct: {result.correct_questions}</div>
-          <div className="text-lg font-medium text-gray-800 mb-2">❌ Total: {result.total_questions}</div>
-          <div className="text-2xl font-bold text-violet-600 mt-2">Score: {result.percentage}%</div>
+          <div className="text-lg font-medium text-gray-800 mb-2">
+            ✅ Correct: {result.correct_questions ?? 0}
+          </div>
+          <div className="text-lg font-medium text-gray-800 mb-2">
+            ❌ Total: {result.total_questions ?? 0}
+          </div>
+          <div className="text-2xl font-bold text-violet-600 mt-2">
+            Score: {Number(result.percentage ?? 0)}%
+          </div>
           <div className="mt-6">
             {result.passed ? (
-              <p className="text-emerald-600 font-semibold">Congratulations! You passed.</p>
+              <p className="text-emerald-600 font-semibold">
+                Congratulations! You passed.
+              </p>
             ) : (
-              <p className="text-red-500 font-semibold">You didn’t pass — try again!</p>
+              <p className="text-red-500 font-semibold">
+                You didn’t pass — try again!
+              </p>
             )}
           </div>
         </div>
@@ -141,7 +161,7 @@ const PlayQuizPage: React.FC = () => {
                   <button
                     key={i}
                     type="button"
-                    onClick={() => handleOptionToggle(idx, opt)}
+                    onClick={() => toggleOption(idx, opt)}
                     className={`p-3 rounded-xl border transition-all ${
                       selected
                         ? "bg-violet-500 text-white shadow-md scale-[1.03]"
@@ -159,8 +179,7 @@ const PlayQuizPage: React.FC = () => {
         <div className="text-center">
           <button
             onClick={handleSubmit}
-            className="px-6 py-3 bg-gradient-to-r from-violet-500 to-indigo-500 text-white rounded-xl font-semibold 
-                       hover:scale-105 transition-all"
+            className="px-6 py-3 bg-gradient-to-r from-violet-500 to-indigo-500 text-white rounded-xl font-semibold hover:scale-105 transition-all"
           >
             Submit Quiz
           </button>
