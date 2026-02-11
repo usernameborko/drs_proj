@@ -31,7 +31,11 @@ const PlayQuizPage: React.FC = () => {
     const fetchQuiz = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:5001/api/quizzes/${id}`);
+        const res = await fetch(`http://localhost:5000/api/quizzes/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`
+          }
+        });
         if (!res.ok) throw new Error(`Failed to load quiz (${res.status})`);
         const data = await res.json();
         setQuiz(data);
@@ -85,11 +89,11 @@ const PlayQuizPage: React.FC = () => {
         time_spent: elapsed,
       };
 
-      const res = await fetch(`http://localhost:5001/api/quizzes/${quiz._id}/submit`, {
+      const res = await fetch(`http://localhost:5000/api/quizzes/${quiz._id}/submit`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
         body: JSON.stringify(payload),
       });

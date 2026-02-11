@@ -196,5 +196,22 @@ def delete_quiz(quiz_id):
     collection.delete_one({"_id": ObjectId(quiz_id)})
     return jsonify({"status": "deleted"}), 200
 
-
+# dobijanje samo jednog kviza
+@quiz_db.route("/<quiz_id>", methods=["GET"])
+def get_quiz_by_id(quiz_id):
+    try:
+        quiz = collection.find_one({"_id": ObjectId(quiz_id)})
+        if not quiz:
+            return jsonify({"message": "Quiz not found"}), 404
+        
+        quiz['_id'] = str(quiz['_id'])
+        
+        # igrac ne smije da vidi tacne odgovore prije nego sto preda kviz
+        if 'questions' in quiz:
+            for q in quiz['questions']:
+                q.pop('correct_answers', None)
+        
+        return jsonify(quiz), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 

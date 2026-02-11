@@ -237,3 +237,12 @@ def send_quiz_report(quiz_id):
     )
 
     return jsonify({"status": "sent"}), 200
+
+@quiz_proxy_bp.route("/<quiz_id>", methods=["GET"])
+@jwt_required()
+def get_quiz_details_proxy(quiz_id):
+    try:
+        response = requests.get(f"{QUIZ_SERVICE_URL}/{quiz_id}")
+        return (response.text, response.status_code, response.headers.items())
+    except Exception as e:
+        return jsonify({"error": f"Could not reach Quiz Service: {str(e)}"}), 500
