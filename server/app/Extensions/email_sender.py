@@ -1,6 +1,8 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 import os
 
 class EmailSender:
@@ -62,3 +64,22 @@ class EmailSender:
                 server.send_message(msg)
         except Exception as e:
             print(f"Error sending mail: {e}")
+
+    def send_pdf_report(self, to_email: str, subject: str, body_html: str, pdf_bytes: bytes, filename: str = "report.pdf"):
+        msg = MIMEMultipart()
+        msg["Subject"] = subject
+        msg["From"] = self.email_from
+        msg["To"] = to_email
+
+        msg.attach(MIMEText(body_html, "html"))
+
+        part = MIMEBase("application", "pdf")
+        part.set_payload(pdf_bytes)
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", f'attachment; filename="{filename}"')
+        msg.attach(part)
+
+        with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+            server.starttls()
+            server.login(self.email_user, self.email_pass)
+            server.send_message(msg)

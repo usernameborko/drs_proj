@@ -97,9 +97,9 @@ def get_published_quizzes():
     return jsonify(quizzes), 200
 
 #pokretanje procesa
-def process_quick_task(quiz_data, user_answers, user_email):
+def process_quick_task(quiz_data, user_answers, user_email, time_spent):
     print(f"Asynchronous processing started for {user_email}...")
-    time.sleep(10) #simulacija obrade
+    time.sleep(10)  
 
     correct_count = 0
     total_points = sum(int(q.get('points', 0)) for q in quiz_data['questions'])
@@ -116,23 +116,48 @@ def process_quick_task(quiz_data, user_answers, user_email):
                 achieved_points += int(question.get('points', 0))
                 correct_count += 1
 
-    
     percentage = (achieved_points / total_points * 100) if total_points > 0 else 0
 
-    print(f"Finished calculating, achived: {achieved_points} points. Sending to {user_email}")
+    print(f"Finished calculating, achieved: {achieved_points} points. Sending to {user_email}")
 
+    
     try:
         email_sender.send_quiz_result_email(
             to_email=user_email,
             quiz_title=quiz_data.get('title', 'Kviz'),
-            score=correct_count,
+            score=achieved_points,
             total=len(quiz_data['questions']),
             percentage=round(percentage, 2)
         )
         print(f"Email successfully sent to {user_email}")
+
     except Exception as e:
         print(f"Error sending email in background process: {e}")
 
+    
+    try:
+        main_server_url = os.getenv("MAIN_SERVER_URL")
+        internal_token = os.getenv("INTERNAL_API_KEY")
+
+        requests.post(
+            f"{main_server_url}/api/quizzes/internal/results",
+            json={
+                "user_email": user_email,
+                "quiz_id": str(quiz_data.get("_id")),
+                "quiz_title": quiz_data.get("title", "Kviz"),
+                "score": int(achieved_points),
+                "total_questions": len(quiz_data.get("questions", [])),
+                "percentage": round(percentage, 2),
+                "time_spent": time_spent
+            },
+            headers={"X-Internal-Token": internal_token},
+            timeout=5
+        )
+
+        print("Result saved to MySQL (main server).")
+
+    except Exception as e:
+        print(f"Error saving result to main server: {e}")
 #slanje odgovora i racunanje bodova
 @quiz_db.route("/<quiz_id>/submit", methods=["POST"])
 def submit_quiz(quiz_id):
@@ -140,11 +165,15 @@ def submit_quiz(quiz_id):
     user_answers = data.get('answers', [])
     user_email = data.get('user_email') 
 
+    time_spent = data.get("time_spent")
+
     quiz = collection.find_one({"_id": ObjectId(quiz_id)})
     if not quiz:
         return jsonify({"message": "Quiz not fount"}), 404
     
-    p = Process(target=process_quick_task, args=(quiz, user_answers, user_email))
+    p = Process(
+    target=process_quick_task,
+    args=(quiz, user_answers, user_email, time_spent))
     p.start()
 
     return jsonify({
@@ -152,6 +181,21 @@ def submit_quiz(quiz_id):
         "status": "processing"
     }), 202
     
+@quiz_db.route("/<quiz_id>", methods=["DELETE"])
+def delete_quiz(quiz_id):
+    data = request.get_json() or {}
+    requester_role = data.get("requester_role")
+    requester_id = data.get("requester_id")
+
+    quiz = collection.find_one({"_id": ObjectId(quiz_id)})
+    if not quiz:
+        return jsonify({"message": "Quiz not found"}), 404
+
+    if requester_role != "ADMIN" and str(quiz.get("author_id")) != str(requester_id):
+        return jsonify({"message": "Forbidden"}), 403
+
+    collection.delete_one({"_id": ObjectId(quiz_id)})
+    return jsonify({"status": "deleted"}), 200
 
 
 

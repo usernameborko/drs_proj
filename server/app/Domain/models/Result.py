@@ -15,6 +15,8 @@ class Result(db.Model):
     total_questions = db.Column(db.Integer, nullable=False)
     percentage = db.Column(db.Float, nullable=False)
 
+    time_spent = db.Column(db.Integer, nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     #relacija sa user modelom
