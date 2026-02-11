@@ -1,7 +1,6 @@
-// src/pages/users/UserListPage.tsx
 import React, { useEffect, useState, useCallback } from "react";
 import { userAPI } from "../api/users/UserAPI";
-import type { UserSummaryDTO } from "../api/users/IUserAPI";
+import type { UserSummaryDTO } from "../models/user/UserSummaryDTO";
 import { UserTable } from "../components/admin/users/UserTable";
 import { UserListHeader } from "../components/admin/users/UserListHeader";
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";

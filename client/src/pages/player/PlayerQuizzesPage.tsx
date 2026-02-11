@@ -1,6 +1,3 @@
-
-
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { quizAPI } from "../../api/quizzes/QuizAPI";
@@ -26,7 +23,6 @@ const PlayerQuizzesPage: React.FC = () => {
       try {
         setLoading(true);
         const data = await quizAPI.getApprovedQuizzes();
-        // Backend vraća listu kvizova sa statusom APPROVED
         setQuizzes(data);
       } catch (err: any) {
         console.error(err);

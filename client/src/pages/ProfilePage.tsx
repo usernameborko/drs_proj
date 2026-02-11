@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { userAPI } from "../api/users/UserAPI";
 import type { UserDTO } from "../models/user/UserDTO";
-import type { UpdateProfileDTO } from "../api/users/IUserAPI";
+import type { UpdateProfileDTO } from "../models/user/UpdateProfileDTO";
 import { ProfileViewCard } from "../components/profile/ProfileViewCard";
 import { ProfileEditForm } from "../components/profile/ProfileEditForm";
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";

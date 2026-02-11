@@ -1,4 +1,4 @@
-import type { RegisterDTO } from "../../api/users/IUserAPI";
+import type { RegisterDTO } from "../../models/user/RegisterDTO";
 
 export interface RegisterErrors {
   first_name?: string;

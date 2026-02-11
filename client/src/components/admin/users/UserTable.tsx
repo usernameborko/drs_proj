@@ -1,5 +1,5 @@
 import React from "react";
-import type { UserSummaryDTO } from "../../../api/users/IUserAPI";
+import type { UserSummaryDTO } from "../../../models/user/UserSummaryDTO";
 import { UserTableRow } from "./UserTableRow";
 
 type UserRole = "PLAYER" | "MODERATOR" | "ADMIN";

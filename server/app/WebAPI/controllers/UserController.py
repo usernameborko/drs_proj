@@ -36,7 +36,7 @@ def delete_user(user_id):
     if not dto:
         return jsonify({"error": f"User with id {user_id} not found"}), status
 
-    return jsonify(asdict(dto), status)
+    return jsonify(asdict(dto)), status
 
 # GET CURRENT USER PROFILE
 @user_bp.route("/profile", methods=["GET"])

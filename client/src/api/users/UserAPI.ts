@@ -1,11 +1,9 @@
-import type { 
-  IUserAPI, 
-  RegisterDTO, 
-  UpdateProfileDTO, 
-  UserListResponse,
-  UserCreatedDTO,
-  ImageUploadResponse
-} from "./IUserAPI";
+import type { IUserAPI } from "./IUserAPI";
+import type { RegisterDTO } from "../../models/user/RegisterDTO";
+import type { UpdateProfileDTO } from "../../models/user/UpdateProfileDTO";
+import type { UserListResponse } from "../../types/user/UserListResponse";
+import type { UserCreatedDTO } from "../../models/user/UserCreatedDTO";
+import type { ImageUploadResponse } from "../../types/user/ImageUploadResponse";
 import type { UserDTO, UserDTOBackend } from "../../models/user/UserDTO";
 import { mapUserDTOFromBackend } from "../../models/user/UserDTO";
 

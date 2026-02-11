@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { UserSummaryDTO } from "../../../api/users/IUserAPI";
+import type { UserSummaryDTO } from "../../../models/user/UserSummaryDTO";
 
 type UserRole = "PLAYER" | "MODERATOR" | "ADMIN";
 

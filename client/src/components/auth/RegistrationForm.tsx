@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { userAPI } from "../../api/users/UserAPI";
-import type { RegisterDTO } from "../../api/users/IUserAPI";
+import type { RegisterDTO } from "../../models/user/RegisterDTO";
 import { validateRegister, type RegisterErrors } from "../../types/validation/registerValidation";
 
-// ✅ Samostalna InputField komponenta (izvučena van RegisterForm)
 interface InputFieldProps {
   name: keyof RegisterDTO;
   label: string;
@@ -87,7 +86,6 @@ const InputField: React.FC<InputFieldProps> = ({
   );
 };
 
-// ✅ Glavna forma za registraciju
 export const RegisterForm: React.FC = () => {
   const [form, setForm] = useState<RegisterDTO>({
     first_name: "",

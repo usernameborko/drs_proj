@@ -96,7 +96,7 @@ const QuizApprovalPage: React.FC = () => {
 
       {/* OVDE UBACI DUGME */}
       <div className="flex justify-end mb-6">
-        <DownloadReportButton quizzes={quizzes} />
+        <DownloadReportButton quizzes={quizzes.map(q => ({ ...q, author_id: String(q.author_id) }))} />
       </div>
 
       {error && <ErrorAlert message={error} onDismiss={() => setError("")} />}
