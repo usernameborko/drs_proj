@@ -12,7 +12,6 @@ export const Navbar: React.FC = () => {
   const [userRole, setUserRole] = useState<string>("PLAYER");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   const handleLogin = () => {
     const token = getToken();
@@ -23,17 +22,9 @@ export const Navbar: React.FC = () => {
         const payload = JSON.parse(atob(token.split(".")[1]));
         setUserEmail(payload.email || payload.sub || "");
         setUserRole(payload.role || "PLAYER");
-
-        const userId = payload.sub || payload.id;
-        if (userId) {
-          setProfileImageUrl(
-            `${import.meta.env.VITE_API_URL}/users/profile-image/${userId}?t=${Date.now()}`
-          );
-        }
       } catch {
         setUserEmail("");
         setUserRole("PLAYER");
-        setProfileImageUrl(null);
       }
     }
   };
@@ -84,13 +75,6 @@ export const Navbar: React.FC = () => {
     setUserEmail("");
     setUserRole("PLAYER");
     navigate("/login");
-  };
-
-  const getUserInitials = () => {
-    if (userEmail && isNaN(Number(userEmail))) {
-      return userEmail.charAt(0).toUpperCase();
-    }
-    return "U";
   };
 
   return (
@@ -252,26 +236,30 @@ export const Navbar: React.FC = () => {
 
                   {/* MODERATOR - Create Quiz */}
                   {userRole === "MODERATOR" && (
-                    <NavLink
-                      to="/moderator/create-quiz"
-                      icon={
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                      }
-                    >
-                      Create Quiz
-                    </NavLink>
+                    <>
+                      <NavLink
+                        to="/moderator/create-quiz"
+                        icon={
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        }
+                      >
+                        Create Quiz
+                      </NavLink>
+
+                      <NavLink
+                        to="/moderator/quizzes"
+                        icon={
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M9 12h6m2 0a2 2 0 012 2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4a2 2 0 012-2m2 0V8a2 2 0 112 0v4" />
+                            </svg>
+                        }
+                      >
+                        Review Quizzes
+                      </NavLink>
+                    </>
                   )}
 
                   {/* USER - Quizzes List */}
@@ -301,9 +289,6 @@ export const Navbar: React.FC = () => {
                   {/* User Menu */}
                   <div className="ml-2 pl-4 border-l border-white/20">
                     <UserMenu
-                      userEmail={userEmail}
-                      userInitials={getUserInitials()}
-                      profileImageUrl={profileImageUrl}
                       onLogout={handleLogout}
                     />
                   </div>
