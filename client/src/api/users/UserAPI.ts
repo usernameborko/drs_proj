@@ -9,6 +9,11 @@ import { mapUserDTOFromBackend } from "../../models/user/UserDTO";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
+interface RegisterResponse {
+  user: UserCreatedDTO;
+  access_token: string;
+}
+
 export class UserAPI implements IUserAPI {
   private getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem("access_token");
@@ -85,7 +90,7 @@ export class UserAPI implements IUserAPI {
     return await response.json();
   }
 
-  async register(data: RegisterDTO): Promise<UserCreatedDTO> {
+  async register(data: RegisterDTO): Promise<RegisterResponse> {
     const response = await fetch(`${BASE_URL}/users/register`, {
       method: "POST",
       headers: {
@@ -99,7 +104,14 @@ export class UserAPI implements IUserAPI {
       throw new Error(errData.error || `Registration failed (${response.status})`);
     }
 
-    return await response.json();
+    const result: RegisterResponse = await response.json();
+    
+    if (result.access_token) {
+      localStorage.setItem("access_token", result.access_token);
+      window.dispatchEvent(new Event("login"));
+    }
+
+    return result;
   }
 
   async getAllUsers(): Promise<UserListResponse> {

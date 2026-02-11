@@ -130,12 +130,10 @@ export const RegisterForm: React.FC = () => {
     setIsLoading(true);
     try {
       await userAPI.register(form);
-      navigate("/login");
+      navigate("/profile");
     } catch (err: any) {
       console.error("Registration failed:", err);
-      setServerError(
-        err.message || "Registration failed. Please try again."
-      );
+      setServerError(err.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +161,6 @@ export const RegisterForm: React.FC = () => {
         noValidate
         className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1"
       >
-        {/* Row 1: Names */}
         <InputField
           name="first_name"
           label="First Name"
@@ -187,7 +184,6 @@ export const RegisterForm: React.FC = () => {
           submitted={submitted}
         />
 
-        {/* Row 2: Email & Password */}
         <InputField
           name="email"
           label="Email"
@@ -211,7 +207,6 @@ export const RegisterForm: React.FC = () => {
           submitted={submitted}
         />
 
-        {/* Row 3: Birth & Gender */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
             Date of Birth
@@ -260,7 +255,6 @@ export const RegisterForm: React.FC = () => {
           </span>
         </div>
 
-        {/* Row 4: Address */}
         <InputField
           name="country"
           label="Country"
@@ -301,7 +295,6 @@ export const RegisterForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Submit Button - Full Width */}
         <div className="md:col-span-2 mt-4">
           <button
             type="submit"
