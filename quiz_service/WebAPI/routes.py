@@ -90,8 +90,7 @@ def get_published_quizzes():
     for q in quizzes:
         q['_id'] = str(q['_id'])
         for question in q.get('questions', []):
-            if 'correct_answers' in question:
-                del question['correct_answer']
+            question.pop("correct_answers", None)
             
         
     return jsonify(quizzes), 200
