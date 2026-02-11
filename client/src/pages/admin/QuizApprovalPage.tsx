@@ -115,6 +115,7 @@ const QuizApprovalPage: React.FC = () => {
       <QuizReviewDialog
         open={dialogOpen}
         quizTitle={selectedQuiz?.title || ""}
+        quizId={selectedQuiz?._id}
         onClose={() => setDialogOpen(false)}
         onApprove={handleApprove}
         onReject={handleReject}
