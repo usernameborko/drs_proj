@@ -12,13 +12,14 @@ interface Quiz {
 interface Props {
   quizzes: Quiz[];
   onReviewClick: (quiz: Quiz) => void;
+  onDeleteClick: (quizId: string, title: string) => void;
 }
 
-export const QuizApprovalTable: React.FC<Props> = ({ quizzes, onReviewClick }) => {
+export const QuizApprovalTable: React.FC<Props> = ({ quizzes, onReviewClick, onDeleteClick }) => {
   if (quizzes.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
-        No quizzes pending review.
+        No quizzes found.
       </div>
     );
   }
@@ -41,13 +42,21 @@ export const QuizApprovalTable: React.FC<Props> = ({ quizzes, onReviewClick }) =
               <td className="px-6 py-4 font-medium text-gray-800">{quiz.title}</td>
               <td className="px-6 py-4 text-gray-600">{quiz.author_id}</td>
               <td className="px-6 py-4 text-gray-600">{quiz.duration}s</td>
-              <td className="px-6 py-4"><QuizStatusBadge status={quiz.status} /></td>
-              <td className="px-6 py-4 text-center">
+              <td className="px-6 py-4">
+                <QuizStatusBadge status={quiz.status} />
+              </td>
+              <td className="px-6 py-4 text-center space-x-2">
                 <button
                   onClick={() => onReviewClick(quiz)}
                   className="px-4 py-2 text-sm rounded-lg bg-gradient-to-r from-violet-500 to-indigo-500 text-white font-medium hover:scale-105 transition"
                 >
                   Review
+                </button>
+                <button
+                  onClick={() => onDeleteClick(quiz._id, quiz.title)}
+                  className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
+                >
+                  Delete
                 </button>
               </td>
             </tr>

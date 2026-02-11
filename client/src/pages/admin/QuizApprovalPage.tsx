@@ -27,7 +27,7 @@ const QuizApprovalPage: React.FC = () => {
     try {
       setLoading(true);
       const data = await quizAPI.getAllQuizzes();
-      setQuizzes(data.filter((q) => q.status === "PENDING"));
+      setQuizzes(data);
     } catch (err: any) {
       setError(err.message || "Failed to load quizzes");
     } finally {
@@ -39,7 +39,6 @@ const QuizApprovalPage: React.FC = () => {
     fetchQuizzes();
     socketService.connect();
     socketService.onNewQuiz((data) => {
-      console.log("📩 New quiz notification:", data);
       setSuccess(data.message || "A new quiz has been submitted!");
       fetchQuizzes();
     });
@@ -70,14 +69,28 @@ const QuizApprovalPage: React.FC = () => {
     }
   };
 
+  const handleDelete = async (quizId: string, title: string) => {
+    if (!window.confirm(`Delete quiz "${title}"? This action cannot be undone.`))
+      return;
+    try {
+      await quizAPI.deleteQuiz(quizId);
+      setSuccess(`Quiz "${title}" deleted`);
+      fetchQuizzes();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete quiz");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-indigo-50 px-6 py-12">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
-            Quiz Review & Approval
+            Quiz Review & Management
           </h1>
-          <p className="mt-1 text-gray-500">Approve or reject quizzes submitted by moderators</p>
+          <p className="mt-1 text-gray-500">
+            Approve, reject, or delete submitted quizzes
+          </p>
         </div>
 
         {error && <ErrorAlert message={error} onDismiss={() => setError("")} />}
@@ -92,6 +105,7 @@ const QuizApprovalPage: React.FC = () => {
               setSelectedQuiz(quiz);
               setDialogOpen(true);
             }}
+            onDeleteClick={handleDelete}
           />
         )}
 

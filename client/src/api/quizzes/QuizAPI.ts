@@ -58,6 +58,39 @@ export class QuizAPI implements IQuizAPI {
 
     return response.json();
   }
+    async getApprovedQuizzes(): Promise<any[]> {
+    const token = localStorage.getItem("access_token");
+
+    const response = await fetch(`${BASE_URL}/quizzes/`, {
+      headers: {
+        "Authorization": token ? `Bearer ${token}` : "",
+      },
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Failed to load quizzes (${response.status}): ${err}`);
+    }
+
+    const quizzes = await response.json();
+    return quizzes.filter((q: any) => q.status === "APPROVED");
+  }
+
+    async deleteQuiz(quizId: string): Promise<void> {
+    const token = localStorage.getItem("access_token");
+    const response = await fetch(`${BASE_URL}/quizzes/${quizId}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": token ? `Bearer ${token}` : "",
+      },
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to delete quiz (${response.status}): ${text}`);
+    }
+  }
+  
 }
 
 export const quizAPI = new QuizAPI();

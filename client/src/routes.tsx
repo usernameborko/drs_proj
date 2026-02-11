@@ -8,6 +8,8 @@ import UserListPage from "./pages/UserListPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreateQuizPage from "./pages/moderator/CreateQuizPage";
 import QuizApprovalPage from "./pages/admin/QuizApprovalPage";
+import PlayerQuizzesPage from "./pages/player/PlayerQuizzesPage";
+import PlayQuizPage from "./pages/player/PlayQuizPage";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -51,6 +53,24 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute>
               <QuizApprovalPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+           path="/quizzes"
+          element={
+            <ProtectedRoute>
+              <PlayerQuizzesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/quiz/:id/play"
+          element={
+            <ProtectedRoute>
+              <PlayQuizPage />
             </ProtectedRoute>
           }
         />
