@@ -102,3 +102,24 @@ def submit_and_save_result(quiz_id):
     
     except Exception as e:
         return jsonify({"error": f"Failed to process quiz: {str(e)}"}), 500
+    
+
+@quiz_proxy_bp.route("/history", methods=["GET"])
+@jwt_required()
+def get_user_history():
+    current_user_id = get_jwt_identity()
+
+    results = Result.query.filter_by(user_id=current_user_id).order_by(Result.created_at.desc()).all()
+
+    history_data = []
+    for res in results:
+        history_data.append({
+            "id": res.id,
+            "quiz_id": res.quiz_id,
+            "quiz_title": res.quiz_title,
+            "score": res.score,
+            "total_questions": res.percentage,
+            "date": res.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+    return jsonify(history_data), 200
