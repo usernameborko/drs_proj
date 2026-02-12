@@ -1,0 +1,11 @@
+flask
+flask-sqlalchemy
+flask-jwt-extended
+flask-cors
+flask-bcrypt
+flask-socketio
+python-dotenv
+pymysql
+requests
+reportlab
+cryptography

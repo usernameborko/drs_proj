@@ -16,7 +16,7 @@ quiz_db = Blueprint("quiz_db", __name__)
 collection = db_mongo.get_collection("quizzes")
 email_sender = EmailSender()
 
-redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+redis_client = redis.Redis(host=os.getenv("REDIS_HOST", "redis_cache"), port=6379, db=0, decode_responses=True)
 
 #pomocna funkcija za brisanje kesa
 def clear_quiz_cache():

@@ -6,8 +6,9 @@ load_dotenv()
 
 class MongoDatabase:
     def __init__(self):
-        self.client = MongoClient(os.getenv("MONGO_URI"))
-        self.db = self.client[os.getenv("DB_NAME")]
+        uri = os.getenv("MONGO_URI", "mongodb://mongo_db:27017/")
+        self.client = MongoClient(uri)
+        self.db = self.client[os.getenv("DB_NAME", "quiz_db")]
     
     def get_collection(self, name):
         return self.db[name]
