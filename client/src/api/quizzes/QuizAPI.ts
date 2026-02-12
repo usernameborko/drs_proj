@@ -19,21 +19,30 @@ export class QuizAPI implements IQuizAPI {
     return await response.json();
   }
 
-  async getAllQuizzes(): Promise<any[]> {
+  async getQuizById(quizId: string): Promise<any> {
     const token = localStorage.getItem("access_token");
-
-    const response = await fetch(`${BASE_URL}/quizzes/`, {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-      },
+    const response = await fetch(`${BASE_URL}/quizzes/${quizId}`, {
+      headers: { Authorization: token ? `Bearer ${token}` : "" },
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Failed to fetch quizzes (${response.status}): ${errText}`);
+      throw new Error(`Failed to load quiz (${response.status}): ${errText}`);
     }
 
-    return response.json();
+    return await response.json();
+  }
+
+  async getAllQuizzes(): Promise<any[]> {
+    const token = localStorage.getItem("access_token");
+    const response = await fetch(`${BASE_URL}/quizzes/`, {
+      headers: { Authorization: token ? `Bearer ${token}` : "" },
+    });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Failed to fetch quizzes (${response.status}): ${errText}`);
+    }
+    return await response.json();
   }
 
   async reviewQuiz(
@@ -42,7 +51,6 @@ export class QuizAPI implements IQuizAPI {
     rejection_reason?: string
   ) {
     const token = localStorage.getItem("access_token");
-
     const response = await fetch(`${BASE_URL}/quizzes/${quizId}/review`, {
       method: "PATCH",
       headers: {
@@ -51,38 +59,30 @@ export class QuizAPI implements IQuizAPI {
       },
       body: JSON.stringify({ status, rejection_reason }),
     });
-
     if (!response.ok) {
       const text = await response.text();
       throw new Error(`Failed to update status: ${text}`);
     }
-
     return response.json();
   }
 
-    async getApprovedQuizzes(): Promise<any[]> {
+  async getApprovedQuizzes(): Promise<any[]> {
     const response = await fetch(`http://localhost:5001/api/quizzes/published`, {
-      method: "GET",
       headers: { "Content-Type": "application/json" },
     });
-
     if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Failed to load quizzes (${response.status}): ${err}`);
+      const text = await response.text();
+      throw new Error(`Failed to load quizzes (${response.status}): ${text}`);
     }
-
-    return await response.json();
+    return response.json();
   }
 
   async deleteQuiz(quizId: string): Promise<void> {
     const token = localStorage.getItem("access_token");
     const response = await fetch(`${BASE_URL}/quizzes/${quizId}`, {
       method: "DELETE",
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-      },
+      headers: { Authorization: token ? `Bearer ${token}` : "" },
     });
-
     if (!response.ok) {
       const text = await response.text();
       throw new Error(`Failed to delete quiz (${response.status}): ${text}`);

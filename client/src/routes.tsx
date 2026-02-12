@@ -14,6 +14,7 @@ import LeaderboardPage from "./pages/leaderboard/LeaderboardPage";
 import ModeratorsQuizPage from "./pages/moderator/ModeratorsQuizPage";
 import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
 import NoPermissionPage from "./pages/NoPermissionPage";
+import EditRejectedQuizPage from "./pages/moderator/EditRejectedQuizPage";
 
 
 const AppRoutes: React.FC = () => {
@@ -52,6 +53,16 @@ const AppRoutes: React.FC = () => {
             <ProtectedRoute>
               <RoleProtectedRoute allowedRoles={["MODERATOR"]}>
                 <CreateQuizPage />
+              </RoleProtectedRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/moderator/edit-quiz/:quizId"
+          element={
+            <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={["MODERATOR"]}>
+                <EditRejectedQuizPage />
               </RoleProtectedRoute>
             </ProtectedRoute>
           }

@@ -4,6 +4,7 @@ import { QuizApprovalTable } from "../../components/admin/quizzes/QuizApprovalTa
 import { ErrorAlert } from "../../components/ui/ErrorAlert";
 import { SuccessAlert } from "../../components/ui/SuccessAlert";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
+import { socketService } from "../../services/socketService";
 
 interface QuizItem {
   _id: string;
@@ -33,11 +34,30 @@ const ModeratorsQuizPage: React.FC = () => {
 
   useEffect(() => {
     fetchQuizzes();
+
+    const socket = socketService.connect();
+
+    // kviz odobren
+    socket.on("quiz_published", (data: any) => {
+      console.log("A quiz was published:", data);
+      setSuccess(data.message || "One of your quizzes was approved!");
+      fetchQuizzes();
+    });
+
+    // kviz odbijen
+    socket.on("quiz_rejected", (data: any) => {
+      console.log("Quiz rejected:", data);
+      setError(`Your quiz was rejected: ${data.rejection_reason || "No reason provided"}`);
+      fetchQuizzes();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const handleDelete = async (quizId: string, title: string) => {
-    if (!window.confirm(`Are you sure you want to delete quiz "${title}"?`))
-      return;
+    if (!window.confirm(`Are you sure you want to delete quiz "${title}"?`)) return;
     try {
       await quizAPI.deleteQuiz(quizId);
       setSuccess(`Deleted quiz "${title}"`);
@@ -55,7 +75,7 @@ const ModeratorsQuizPage: React.FC = () => {
             Manage Quizzes
           </h1>
           <p className="mt-1 text-gray-500">
-            View and delete your own quizzes.
+            View and track your quizzes. You will be notified in real time if the admin approves or rejects them.
           </p>
         </div>
 
@@ -63,14 +83,16 @@ const ModeratorsQuizPage: React.FC = () => {
         {success && <SuccessAlert message={success} onDismiss={() => setSuccess("")} />}
 
         {loading ? (
-          <LoadingSpinner message="Loading quizzes..." />
-        ) : (
-          <QuizApprovalTable
-            quizzes={quizzes}
-            onDeleteClick={handleDelete}
-            showReviewButton={false}
-          />
-        )}
+        <LoadingSpinner message="Loading quizzes..." />
+         ) : (
+        <QuizApprovalTable
+          quizzes={quizzes}
+          onDeleteClick={handleDelete}
+          showReviewButton={false}
+          refreshData={fetchQuizzes}
+          mode="moderator"
+        />
+      )}
       </div>
     </div>
   );
