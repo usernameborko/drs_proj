@@ -12,8 +12,6 @@ from app.Domain.models.Result import Result
 from app.Domain.enums.role import Role
 from app.Extensions.email_sender import EmailSender
 
-
-
 quiz_proxy_bp = Blueprint("quiz_proxy", __name__)
 QUIZ_SERVICE_URL = "http://localhost:5001/api/quizzes"
 
