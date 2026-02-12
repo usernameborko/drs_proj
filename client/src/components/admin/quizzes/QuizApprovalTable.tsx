@@ -117,12 +117,14 @@ export const QuizApprovalTable: React.FC<Props> = ({
                     </button>
                   )}
 
+                  {mode !== "moderator" && (
                   <button
                     onClick={() => handleSendReport(quiz._id)}
                     className="flex-1 min-w-[130px] px-4 py-2 text-sm rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
                   >
                     Send Report
                   </button>
+                  )}
 
                   <button
                     onClick={() => onDeleteClick(quiz._id, quiz.title)}
