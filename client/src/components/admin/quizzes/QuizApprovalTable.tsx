@@ -1,4 +1,4 @@
-import React from "react";
+
 import { QuizStatusBadge } from "./QuizStatusBadge";
 
 interface Quiz {
@@ -14,6 +14,7 @@ interface Props {
   onReviewClick?: (quiz: Quiz) => void;
   onDeleteClick: (quizId: string, title: string) => void;
   showReviewButton?: boolean;
+  refreshData: () => void;
 }
 
 export const QuizApprovalTable: React.FC<Props> = ({

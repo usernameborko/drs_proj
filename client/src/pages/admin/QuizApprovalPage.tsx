@@ -109,6 +109,7 @@ const QuizApprovalPage: React.FC = () => {
           quizzes={quizzes}
           onReviewClick={(quiz) => { setSelectedQuiz(quiz); setDialogOpen(true); }}
           onDeleteClick={handleDelete}
+          refreshData={fetchQuizzes}
         />
       )}
 
