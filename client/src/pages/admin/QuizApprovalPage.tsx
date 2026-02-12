@@ -109,12 +109,14 @@ const QuizApprovalPage: React.FC = () => {
           quizzes={quizzes}
           onReviewClick={(quiz) => { setSelectedQuiz(quiz); setDialogOpen(true); }}
           onDeleteClick={handleDelete}
+          refreshData={fetchQuizzes}
         />
       )}
 
       <QuizReviewDialog
         open={dialogOpen}
         quizTitle={selectedQuiz?.title || ""}
+        quizId={selectedQuiz?._id}
         onClose={() => setDialogOpen(false)}
         onApprove={handleApprove}
         onReject={handleReject}

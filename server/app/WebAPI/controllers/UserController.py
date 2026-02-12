@@ -6,9 +6,11 @@ from app.Services.UserService import UserService
 from app.WebAPI.validation.UserValidation import UserValidation
 from app.Domain.enums.role import Role
 from app.Middleware.role_required import role_required
+from app.Extensions.email_sender import EmailSender
 
 user_bp = Blueprint("users", __name__)
 user_service = UserService()
+email_sender = EmailSender()
 
 # CREATE
 @user_bp.route("/register", methods=["POST"])
@@ -126,16 +128,30 @@ def change_user_role(user_id):
     data = request.get_json()
 
     error = UserValidation.validate_role_change(data)
-
     if error:
         return error
 
-    new_role = Role(data["role"])
+    new_role_val = data["role"]
+    new_role = Role(new_role_val)
 
     dto, status = user_service.change_user_role(user_id, new_role)
 
     if not dto:
         return jsonify({"error": f"User with id {user_id} not found"}), status
+
+    #slanje mejla
+    try:
+        user_email = dto.email
+        full_name = f"{dto.first_name} {dto.last_name}"
+        
+        email_sender.send_role_change_email(
+            to_email=user_email,
+            new_role=new_role_val,
+            full_name=full_name
+        )
+        print(f"Notification email sent to {user_email} for new role: {new_role_val}")
+    except Exception as e:
+        print(f"Failed to send role change email: {str(e)}")
 
     return jsonify(asdict(dto)), status
 

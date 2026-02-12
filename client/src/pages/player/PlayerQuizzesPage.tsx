@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { quizAPI } from "../../api/quizzes/QuizAPI";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { ErrorAlert } from "../../components/ui/ErrorAlert";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5000");
 
 interface Quiz {
   _id: string;
@@ -17,6 +20,30 @@ const PlayerQuizzesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const loadQuizzes = async () => {
+    try{
+      const data = await quizAPI.getApprovedQuizzes();
+      setQuizzes(data);
+    } catch (err: any){
+      setError(err.message || "Failed to load quizzes")
+    } finally{
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadQuizzes();
+
+    socket.on('quiz_published', (data) => {
+      console.log("Real-time update: New quiz published!", data);
+      loadQuizzes();
+    });
+
+    return () => {
+      socket.off('quiz_published');
+    };
+  }, []);
 
   useEffect(() => {
     const load = async () => {

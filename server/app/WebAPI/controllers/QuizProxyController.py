@@ -12,8 +12,6 @@ from app.Domain.models.Result import Result
 from app.Domain.enums.role import Role
 from app.Extensions.email_sender import EmailSender
 
-
-
 quiz_proxy_bp = Blueprint("quiz_proxy", __name__)
 QUIZ_SERVICE_URL = "http://localhost:5001/api/quizzes"
 
@@ -35,7 +33,7 @@ def notify_admin():
 
     #prikazivanje svim povezanim klijentima
     socketio.emit('new_quiz_created', {
-        'message': f"Novi kviz '{quiz_title}' ceka na odobrenje",
+        'message': f"New quiz '{quiz_title}' is waiting for approval",
         'quiz_id': quiz_id
     })
 
@@ -47,9 +45,15 @@ def notify_admin():
 @admin_required
 def review_quiz(quiz_id):
     data = request.json
+    new_status = data.get("status")
 
     try:
         response = requests.patch(f"{QUIZ_SERVICE_URL}/{quiz_id}/status", json=data)
+        if response.status_code == 200 and new_status == "APPROVED":
+            socketio.emit('quiz_published', {
+                'message': 'New quiz aveilable',
+                'quiz_id': quiz_id
+            })
         return (response.text, response.status_code, response.headers.items())
     except Exception as e:
         return jsonify({"error": f"Could not reach Quiz Service: {str(e)}"}), 500

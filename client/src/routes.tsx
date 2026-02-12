@@ -12,6 +12,8 @@ import PlayerQuizzesPage from "./pages/player/PlayerQuizzesPage";
 import PlayQuizPage from "./pages/player/PlayQuizPage";
 import LeaderboardPage from "./pages/leaderboard/LeaderboardPage";
 import ModeratorsQuizPage from "./pages/moderator/ModeratorsQuizPage";
+import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
+import NoPermissionPage from "./pages/NoPermissionPage";
 
 
 const AppRoutes: React.FC = () => {
@@ -37,7 +39,9 @@ const AppRoutes: React.FC = () => {
           path="/users"
           element={
             <ProtectedRoute>
-              <UserListPage />
+              <RoleProtectedRoute allowedRoles={["ADMIN"]}>
+                <UserListPage />
+              </RoleProtectedRoute>
             </ProtectedRoute>
           }
         />
@@ -46,7 +50,9 @@ const AppRoutes: React.FC = () => {
           path="/moderator/create-quiz"
           element={
             <ProtectedRoute>
-              <CreateQuizPage />
+              <RoleProtectedRoute allowedRoles={["MODERATOR"]}>
+                <CreateQuizPage />
+              </RoleProtectedRoute>
             </ProtectedRoute>
           }
         />
@@ -55,16 +61,20 @@ const AppRoutes: React.FC = () => {
           path="/admin/quizzes"
           element={
             <ProtectedRoute>
-              <QuizApprovalPage />
+              <RoleProtectedRoute allowedRoles={["ADMIN"]}>
+                <QuizApprovalPage />
+              </RoleProtectedRoute>
             </ProtectedRoute>
           }
         />
 
         <Route
-           path="/quizzes"
+          path="/quizzes"
           element={
             <ProtectedRoute>
-              <PlayerQuizzesPage />
+              <RoleProtectedRoute allowedRoles={["PLAYER"]}>
+                <PlayerQuizzesPage />
+              </RoleProtectedRoute>
             </ProtectedRoute>
           }
         />
@@ -73,10 +83,13 @@ const AppRoutes: React.FC = () => {
           path="/quiz/:id/play"
           element={
             <ProtectedRoute>
-              <PlayQuizPage />
+              <RoleProtectedRoute allowedRoles={["PLAYER"]}>
+                <PlayQuizPage />
+              </RoleProtectedRoute>
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/leaderboard/:quizId"
           element={
@@ -90,10 +103,14 @@ const AppRoutes: React.FC = () => {
           path="/moderator/quizzes"
           element={
             <ProtectedRoute>
-              <ModeratorsQuizPage />
+              <RoleProtectedRoute allowedRoles={["MODERATOR"]}>
+                <ModeratorsQuizPage />
+              </RoleProtectedRoute>
             </ProtectedRoute>
           }
         />
+
+        <Route path="/no-permission" element={<NoPermissionPage />} />
 
         {/* Dodati i “Not Found” rutu */}
       </Routes>
