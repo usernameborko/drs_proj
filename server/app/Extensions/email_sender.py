@@ -64,6 +64,7 @@ class EmailSender:
                 server.send_message(msg)
         except Exception as e:
             print(f"Error sending mail: {e}")
+            
 
     def send_pdf_report(self, to_email: str, subject: str, body_html: str, pdf_bytes: bytes, filename: str = "report.pdf"):
         msg = MIMEMultipart()

@@ -23,12 +23,34 @@ export const QuizApprovalTable: React.FC<Props> = ({
   showReviewButton = true,
 }) => {
   if (quizzes.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        No quizzes found.
-      </div>
-    );
+    return <div className="text-center py-12 text-gray-500">No quizzes found.</div>;
   }
+
+  const handleSendReport = async (quizId: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/quizzes/${quizId}/report`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        alert("Failed to generate report");
+        return;
+      }
+
+      alert("PDF report sent to your email!");
+    } catch (err) {
+      console.error(err);
+      alert("Error sending report");
+    }
+  };
 
   return (
     <div className="overflow-x-auto bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-white/60">
@@ -42,20 +64,18 @@ export const QuizApprovalTable: React.FC<Props> = ({
             <th className="px-6 py-3 text-center">Actions</th>
           </tr>
         </thead>
+
         <tbody>
           {quizzes.map((quiz) => (
-            <tr
-              key={quiz._id}
-              className="border-t hover:bg-gray-50 transition-all"
-            >
-              <td className="px-6 py-4 font-medium text-gray-800">
-                {quiz.title}
-              </td>
+            <tr key={quiz._id} className="border-t hover:bg-gray-50 transition-all">
+              <td className="px-6 py-4 font-medium text-gray-800">{quiz.title}</td>
               <td className="px-6 py-4 text-gray-600">{quiz.author_id}</td>
               <td className="px-6 py-4 text-gray-600">{quiz.duration}s</td>
+
               <td className="px-6 py-4">
                 <QuizStatusBadge status={quiz.status} />
               </td>
+
               <td className="px-6 py-4 text-center space-x-2">
                 {showReviewButton && (
                   <button
@@ -65,6 +85,14 @@ export const QuizApprovalTable: React.FC<Props> = ({
                     Review
                   </button>
                 )}
+
+                <button
+                  onClick={() => handleSendReport(quiz._id)}
+                  className="px-4 py-2 text-sm rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
+                >
+                  Send Report
+                </button>
+
                 <button
                   onClick={() => onDeleteClick(quiz._id, quiz.title)}
                   className="px-4 py-2 text-sm rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
